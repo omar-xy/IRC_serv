@@ -6,6 +6,7 @@
 #include <iostream>
 #include <string>
 #include <poll.h>
+#include <vector>
 
 int main(int argc, char **argv)
 {
@@ -37,60 +38,37 @@ int main(int argc, char **argv)
         return 1;
     }
 
-    if (listen(sock, 1) == -1)
+    if (listen(sock, 5) == -1) // Allow more than one connection
     {
         perror("listen");
         close(sock);
         return 1;
     }
 
-    int client = accept(sock, NULL, NULL);
-    if (client == -1)
-    {
-        perror("accept");
-        close(sock);
-        return 1;
-    }
+    std::vector<pollfd> fds;
+    fds.push_back((pollfd){sock, POLLIN});
 
-    char buff[1024];
-    ssize_t len = recv(client, buff, sizeof(buff) - 1, 0);
-    if (len == -1)
+    while (1)
     {
-        perror("recv");
-        close(client);
-        close(sock);
-        return 1;
-    }
-
-    buff[len] = '\0';
-	std::string password = buff;
-	password = password.substr(5, password.size() - 7); 
-	std::cout << "Received: |" << password << "| size: " << password.size() << std::endl;
-	std::cout << "Expected: |" << passwd << "| size: " << passwd.size() << std::endl;
-	if (password != passwd)
-	{
-		std::cerr << "Invalid password" << std::endl;
-		close(client);
-		close(sock);
-		return 1;
-	}
-    // Create poll
-    struct pollfd fds[1];
-    fds[0].fd = client;
-    fds[0].events = POLLIN;
-
-    while (true)
-    {
-        int ret = poll(fds, 1, -1);
+        int ret = poll(fds.data(), fds.size(), -1);
         if (ret == -1)
         {
             perror("poll");
-            close(client);
             close(sock);
             return 1;
         }
+
         if (fds[0].revents & POLLIN)
         {
+            int client = accept(sock, NULL, NULL);
+            if (client == -1)
+            {
+                perror("accept");
+                close(sock);
+                return 1;
+            }
+
+            char buff[2048]; // Increase buffer size
             ssize_t len = recv(client, buff, sizeof(buff) - 1, 0);
             if (len == -1)
             {
@@ -99,19 +77,49 @@ int main(int argc, char **argv)
                 close(sock);
                 return 1;
             }
-            if (len == 0)
-            {
-                std::cout << "Connection closed" << std::endl;
-                break;
-            }
+
             buff[len] = '\0';
-            std::cout << "Received: " << buff << std::endl;
+            std::string password = buff;
+            password = password.substr(0, passwd.size());
+            std::cout << "Received: |" << password << "| size: " << password.size() << std::endl;
+            std::cout << "Expected: |" << passwd << "| size: " << passwd.size() << std::endl;
+            if (password != passwd)
+            {
+                std::cerr << "Invalid password" << std::endl;
+                close(client);
+            }
+            else
+            {
+                fds.push_back((pollfd){client, POLLIN});
+            }
+        }
+
+        for (size_t i = 1; i < fds.size(); ++i)
+        {
+            if (fds[i].revents & POLLIN)
+            {
+                char buff[2048];
+                ssize_t len = recv(fds[i].fd, buff, sizeof(buff) - 1, 0);
+                if (len == -1)
+                {
+                    perror("recv");
+                    close(fds[i].fd);
+                    fds.erase(fds.begin() + i);
+                }
+                else if (len == 0)
+                {
+                    std::cout << "Connection closed" << std::endl;
+                    close(fds[i].fd);
+                    fds.erase(fds.begin() + i);
+                }
+                else
+                {
+                    buff[len] = '\0';
+                    std::cout << "Received from client " << i << ": " << buff << std::endl;
+                }
+            }
         }
     }
-
-	close(client);
-	close(sock);
-
-
+    close(sock);
     return 0;
 }

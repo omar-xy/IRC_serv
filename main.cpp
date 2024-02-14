@@ -78,7 +78,7 @@ int main(int argc, char **argv)
 
             buff[len] = '\0';
             std::string password = buff;
-            password = password.substr(0, passwd.size());
+            password = password.substr(5, passwd.size());
             std::cout << "Received: |" << password << "| size: " << password.size() << std::endl;
             std::cout << "Expected: |" << passwd << "| size: " << passwd.size() << std::endl;
             if (password != passwd)

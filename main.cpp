@@ -25,12 +25,10 @@ int main(int argc, char **argv)
         perror("socket");
         return 1;
     }
-
     struct sockaddr_in addr;
     addr.sin_family = AF_INET;
     addr.sin_port = htons(port);
     addr.sin_addr.s_addr = htonl(INADDR_ANY);
-
     if (bind(sock, (struct sockaddr *)&addr, sizeof(addr)) == -1)
     {
         perror("bind");
@@ -93,7 +91,6 @@ int main(int argc, char **argv)
                 fds.push_back((pollfd){client, POLLIN});
             }
         }
-
         for (size_t i = 1; i < fds.size(); ++i)
         {
             if (fds[i].revents & POLLIN)

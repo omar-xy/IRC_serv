@@ -109,7 +109,7 @@ int main(int argc, char **argv)
 
 	close(client);
 	close(sock);
-
+    std::cout << "Connection closed" << std::endl;
 
     return 0;
 }

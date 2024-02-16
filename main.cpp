@@ -42,21 +42,23 @@ int main(int argc, char **argv)
         close(sock);
         return 1;
     }
-
     std::vector<pollfd> fds;
-    fds.push_back((pollfd){sock, POLLIN});
+    // fds.push_back((pollfd){sock, POLLIN});// sock
 
+
+//
     while (1)
     {
-        int ret = poll(fds.data(), fds.size(), -1);
+        // in this loop, we are using the poll() function to wait for events on the file descriptors
+        int ret = poll(fds.data(), fds.size(), -1);//poll() function waits for one of a set of file descriptors to become ready to perform I/O
+        // the fds.data() is a pointer to the first element in the vector
         if (ret == -1)
         {
             perror("poll");
             close(sock);
             return 1;
         }
-
-        if (fds[0].revents & POLLIN)
+        if (fds[0].revents & POLLIN)// POLLIN is a flag that indicates that data other than high-priority data may be read without blocking
         {
             int client = accept(sock, NULL, NULL);
             if (client == -1)
@@ -91,6 +93,7 @@ int main(int argc, char **argv)
                 fds.push_back((pollfd){client, POLLIN});
             }
         }
+        // this if statement checks if the file descriptor is ready to read
         for (size_t i = 1; i < fds.size(); ++i)
         {
             if (fds[i].revents & POLLIN)

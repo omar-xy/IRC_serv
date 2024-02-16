@@ -6,7 +6,7 @@
 /*   By: otaraki <otaraki@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/02/16 16:16:28 by otaraki           #+#    #+#             */
-/*   Updated: 2024/02/16 19:16:16 by otaraki          ###   ########.fr       */
+/*   Updated: 2024/02/16 20:55:52 by otaraki          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,6 +19,8 @@ IRCServer::IRCServer()
     this->sock = 0;
     this->kq = 0;
     this->pswd = "password";
+    for (int i = 0; i < NUM_CLIENTS; i++)
+        clients[i].fd = 0;
 }
 
 
@@ -142,19 +144,29 @@ void    IRCServer::run_event_loop()
         {
             if (evList[i].ident == this->sock)
             {
-                int client = accept(this->sock, (struct sockaddr *)&addr, &socklen);
-                if (client == -1)
+                int fd = accept(this->sock, (struct sockaddr *)&addr, &socklen);
+                if (conn_add(fd) == 0) 
                 {
-                    perror("accept");
-                    return;
+                    EV_SET(&evSet, fd, EVFILT_READ, EV_ADD, 0, 0, NULL);
+                    kevent(kq, &evSet, 1, NULL, 0, NULL);
+                    send_welcome_msg(fd);
+                } 
+                else 
+                {
+                    // printf("connection refused.\n");
+                    std::cout << "connection refused" << std::endl;
+                    close(fd);
                 }
-                int flags = fcntl(client, F_GETFL, 0);
-                fcntl(client, F_SETFL, flags | O_NONBLOCK);
-                EV_SET(&evSet, client, EVFILT_READ, EV_ADD, 0, 0, 0);
-                kevent(this->kq, &evSet, 1, NULL, 0, NULL);
-                send_welcome_msg(client);
-            }
-            else
+            } // client disconnected
+            else if (evList[i].flags & EV_EOF) 
+            {
+                int fd = evList[i].ident;
+                std::cout << "client #" << get_connection(fd) << " disconnected" << std::endl;
+                EV_SET(&evSet, fd, EVFILT_READ, EV_DELETE, 0, 0, NULL);
+                kevent(kq, &evSet, 1, NULL, 0, NULL);
+                conn_del(fd);
+            } // read message from client
+            else if (evList[i].filter == EVFILT_READ) 
             {
                 recv_msg(evList[i].ident);
             }
@@ -181,35 +193,27 @@ void IRCServer::disconnect()
 
 int IRCServer::get_connection(int fds)
 {
-    for (size_t i = 0; i < this->fds.size(); i++)
-    {
-        if (this->fds[i].fd == -1)
+    for (int i = 0; i < NUM_CLIENTS; i++)
+        if (clients[i].fd == fds)
             return i;
-    }
     return -1;
 }
 
 int IRCServer::conn_add(int fds)
 {
-    if(fds < 1)
-    {
-        return -1;
-    }
+    if (fds < 1) return -1;
     int i = get_connection(0);
-    if (i == -1)
-        return -1;
-    this->fds[i].fd = fds;
+    if (i == -1) return -1;
+    clients[i].fd = fds;
     return 0;
 }
 
 int IRCServer::conn_del(int fds)
 {
-    if (fds < 1)
-        return -1;
+    if (fds < 1) return -1;
     int i = get_connection(fds);
-    if (i == -1)
-        return -1;
-    this->fds[i].fd = 0;
+    if (i == -1) return -1;
+    clients[i].fd = 0;
     return close(fds);
 }
 
@@ -220,11 +224,6 @@ void IRCServer::recv_msg(int s)
     if (bytes_read == -1) {
         perror("recv failed");
         return;
-    }
-    if (bytes_read == 0) {
-        std::cout << "client #" << get_connection(s) << " disconnected" << std::endl;
-        conn_del(s);
-        exit(0);
     }
     buf[bytes_read] = '\0';
     std::cout << "client #" << get_connection(s) << ": " << buf.data() << std::endl;

@@ -26,10 +26,14 @@ class IRCServer
         int sock;
         int kq;
         std::string pswd;
+        struct cliern_data
+        {
+            int fd;
+        }clients[NUM_CLIENTS];
         // std::string nick;
         // std::string user;
         // std::string realname;
-        std::vector<pollfd> fds;
+        // std::vector<pollfd> fds;
         // std::vector<std::string> channels;
         // std::vector<std::string> users;
         // std::vector<std::string> messages;

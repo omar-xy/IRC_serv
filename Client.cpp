@@ -1,4 +1,3 @@
 #include "include/Client.hpp"
 
-Client::Client(int socket, std::string login, std::string nick) : socket(socket), login(login), nick(nick)
-{}
+Client::Client() : authLevel(0), loggedIn(false) {}

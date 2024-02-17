@@ -10,6 +10,7 @@
 #include <netinet/in.h>
 #include <unistd.h>
 #include "Client.hpp"
+#include <unordered_map>
 
 // struct sockaddr_in server;
 // server.sin_family = AF_INET;
@@ -21,12 +22,15 @@
 class Server 
 {
 	public:
-		Server(sa_family_t family, in_port_t port, in_addr_t addr);
+		Server(sa_family_t family, in_port_t port, in_addr_t addr, std::string _passwd);
 		void	handleClients();
-		void	handShake();
+		void	addClient();
+		void	handShake(int sock, std::string buff, unsigned int index);
+		bool	isUniqueNick(std::string nick);
 	private:
 		int sock;
 		std::string passwd;
 		struct sockaddr_in addr;
-		std::vector<pollfd>	clients;
+		std::vector<pollfd>	fds;
+		std::unordered_map<int, Client> clients;
 };

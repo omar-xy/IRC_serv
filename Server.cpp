@@ -30,7 +30,7 @@ void	exitError(int status, std::string err, int sock, int client)
 	}
 }
 
-Server::Server(sa_family_t family, in_port_t port, in_addr_t _addr)
+Server::Server(sa_family_t family, in_port_t port, in_addr_t _addr, std::string _passwd) : passwd(_passwd)
 {
 	memset(&addr, 0, sizeof(addr));
 	addr.sin_family = family;
@@ -43,63 +43,90 @@ Server::Server(sa_family_t family, in_port_t port, in_addr_t _addr)
 	exitError(fcntl(sock, F_SETFL, O_NONBLOCK), "fcntl()", sock);
 	exitError(bind(sock, (sockaddr *)&addr, sizeof(addr)), "bind()", sock);
 	exitError(listen(sock, SOMAXCONN), "listen()", sock);
-	clients.push_back((pollfd){sock, POLL_IN});
+	fds.push_back((pollfd){sock, POLL_IN});
 	handleClients();
 }
 
-void	Server::handShake()
+void	Server::addClient()
 {
 	int	clientSock = accept(sock, NULL, NULL);
 
 	exitError(clientSock, "accept()", sock);
+	fds.push_back((pollfd){clientSock, POLL_IN});
+	clients[clientSock] = Client();
+}
 
-	char	buff[512];
+bool	Server::isUniqueNick(std::string nick)
+{
+	if (!nick.size())
+		return (false);
+	for (std::unordered_map<int, Client>::iterator it = clients.begin(); it != clients.end(); it++)
+	{
+		if (it->second.nick == nick)
+			return (false);
+	}
+	return (true);
+}
 
-	memset(&buff, 0, sizeof(buff));
-	ssize_t	len = recv(clientSock, &buff, sizeof(buff) - 1, 0);
-
-	if (len < 0 && errno != EAGAIN && errno != EWOULDBLOCK)
-			exitError(len, "recv()", sock, clientSock);
-
-	buff[len] = '\0';
-
-	std::cout << "Deb[we receive]: " << buff << std::endl; 
-	clients.push_back((pollfd){clientSock, POLL_IN});
-	
+void	Server::handShake(int sock, std::string buff, unsigned int index)
+{
+	if (!(clients[sock].authLevel & 1) && buff.substr(0, 5) == "PASS " && buff.substr(5) == passwd)
+		clients[sock].authLevel++;
+	else if (!(clients[sock].authLevel & 2) && buff.substr(0, 5) == "NICK " && isUniqueNick(buff.substr(5)))
+	{
+		clients[sock].nick = buff.substr(5);
+		clients[sock].authLevel = clients[sock].authLevel | 2;	
+	}
+	else if (!(clients[sock].authLevel & 4) && buff.substr(0, 5) == "USER ")
+	{
+		clients[sock].login = buff.substr(5);
+		clients[sock].authLevel = clients[sock].authLevel | 4;
+	}
+	if ((clients[sock].authLevel == 7) && clients[sock].loggedIn == false)
+	{
+		std::string msg = ":localhost 001 cypher :Welcome to the server ";
+		msg += clients[sock].nick;
+		msg += "!\r\n";
+		send(sock, msg.c_str(), msg.size(), 0);
+		std::cout << "Client " << clients[sock].nick << " has connected!" << std::endl;
+		clients[sock].loggedIn = true;
+	}
 }
 
 void	Server::handleClients()
 {
 	while (1)
 	{
-		int res = poll(clients.data(), clients.size(), 0);
+		int res = poll(fds.data(), fds.size(), 0);
 		exitError(res, "poll()", sock);
-		if (clients[0].revents & POLL_IN)
-			handShake();
-		for (unsigned int i = 1; i < clients.size(); i++)
+		if (fds[0].revents & POLL_IN)
+			addClient();
+		for (unsigned int i = 1; i < fds.size(); i++)
 		{
-			if (clients[i].revents & POLL_IN)
+			if (fds[i].revents & POLL_IN)
 			{
 				char	buff[512];
-				ssize_t	len = recv(clients[i].fd, &buff, sizeof(buff) - 1, 0);
+				ssize_t	len = recv(fds[i].fd, &buff, sizeof(buff) - 1, 0);
 				if (len < 0)
 				{
-					perror("recv(_)");
-					close(clients[i].fd);
-					clients.erase(clients.begin() + i);
+					perror("recv()");
+					close(fds[i].fd);
+					fds.erase(fds.begin() + i);
 					i--;
 				}
 				else if (len == 0)
 				{
 					std::cout << "Client Disconnected!" << std::endl;
-					close(clients[i].fd);
-					clients.erase(clients.begin() + i);
+					close(fds[i].fd);
+					fds.erase(fds.begin() + i);
 					i--;
 				}
 				else
 				{
-					buff[len] = '\0';
-					std::cout << "Deb[we receive after success]: " << buff << std::endl; 
+					buff[len > 0 ? ((len > 1 && buff[len - 2] == '\r') ? len - 2 : len - 1) : len] = '\0';
+					std::string tempBuff = buff;
+					if (clients[fds[i].fd].authLevel != 7 && tempBuff.size())
+						handShake(fds[i].fd, tempBuff, i);
 				}
 			}
 		}

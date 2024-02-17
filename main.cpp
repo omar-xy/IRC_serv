@@ -10,7 +10,7 @@ int main(int ac, char **av)
 		std::cerr << "Error: usage ./ircserv <port> <password>" << std::endl;
 		exit(1);
 	}
-	Server server = Server(AF_INET, 5000, INADDR_ANY);
+	Server server = Server(AF_INET, 5000, INADDR_ANY, av[2]);
 
 	std::cout << "the end" << std::endl;
 }

@@ -12,10 +12,10 @@
 
 class	Client
 {
-	private:
-		int	socket;
-		std::string login;
-		std::string nick;
 	public:
-		Client(int	socket, std::string login, std::string nick);
+		Client();
+		int			authLevel;
+		bool		loggedIn;
+		std::string nick;
+		std::string login;
 };

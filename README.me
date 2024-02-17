@@ -1,0 +1,14 @@
+  nickname having a maximum length of nine (9) characters.
+https://datatracker.ietf.org/doc/html/rfc1459\#section-1.2
+
+  Channels names are strings (beginning with a '&' or '#' character) of length up to 200 characters
+the only restriction on a channel name is that it may not contain any spaces (' '), a control G (^G or ASCII 7), or a comma (',' which is used as a list item separator by the protocol).
+https://datatracker.ietf.org/doc/html/rfc1459\#section-1.3
+
+ A channel operator is identified by the '@ symbol next to their nickname
+https://datatracker.ietf.org/doc/html/rfc1459\#section-1.3.1
+   The presence of a prefix is indicated with a single leading ASCII    colon character (':', 0x3b), which must be the first character of the    message itself.  There must be no gap (whitespace) between the colon    and the prefix.  The prefix is used by servers to indicate the true
+https://datatracker.ietf.org/doc/html/rfc1459#section-2.3
+:irc.example.com PRIVMSG #channel :Hello, world!
+
+

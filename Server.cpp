@@ -1,5 +1,82 @@
 #include "include/Server.hpp"
 
+// 2.3.1 Message format in 'pseudo' BNF
+
+class Message
+{
+public:
+	std::string	prefix;
+	std::string	command;
+	std::vector<std::string> params;
+	void	parse(std::string msg)
+	{
+		// \r\n
+		size_t	pos = msg.find("\r\n");
+		if (pos != std::string::npos)
+			msg.erase(pos);
+		// :prefix command params
+		pos = msg.find(" ");
+		if (msg[0] == ':')
+		{
+			prefix = msg.substr(1, pos - 1);
+			msg.erase(0, pos + 1);
+		}
+		else
+			prefix.clear();
+		// command params
+		pos = msg.find(" ");
+		command = msg.substr(0, pos);
+		msg.erase(0, pos + 1);
+		// params
+		while (msg.size())
+		{
+			if (msg[0] == ':')
+			{
+				params.push_back(msg.substr(1));
+				break ;
+			}
+			pos = msg.find(" ");
+			if (pos != std::string::npos)
+			{
+				params.push_back(msg.substr(0, pos));
+				msg.erase(0, pos + 1);
+			}
+			else
+			{
+				params.push_back(msg);
+				break ;
+			}
+		}
+	}
+	std::string	toString()
+	{
+		std::string ret;
+		if (prefix.size())
+			ret += ":" + prefix + " ";
+		ret += command;
+		for (std::vector<std::string>::iterator it = params.begin(); it != params.end(); it++)
+			ret += " " + *it;
+		ret += "\r\n";
+		return (ret);
+	}
+	void	clear()
+	{
+		prefix.clear();
+		command.clear();
+		params.clear();
+	}
+	void	printMessage()
+	{
+		std::cout << "Prefix: " << prefix << std::endl;
+		std::cout << "Command: " << command << std::endl;
+		for (std::vector<std::string>::iterator it = params.begin(); it != params.end(); it++)
+			std::cout << "Param: " << *it << std::endl;
+	}
+};
+
+
+
+
 void	exitError(int status, std::string err)
 {
 	if (status < 0)
@@ -68,27 +145,36 @@ bool	Server::isUniqueNick(std::string nick)
 	return (true);
 }
 
-void	Server::handShake(int sock, std::string buff, unsigned int index)
+void	Server::handShake(int sock, Message msg)
 {
-	if (!(clients[sock].authLevel & 1) && buff.substr(0, 5) == "PASS " && buff.substr(5) == passwd)
-		clients[sock].authLevel++;
-	else if (!(clients[sock].authLevel & 2) && buff.substr(0, 5) == "NICK " && isUniqueNick(buff.substr(5)))
+	if (msg.command == "NICK")
 	{
-		clients[sock].nick = buff.substr(5);
-		clients[sock].authLevel = clients[sock].authLevel | 2;	
+		if (msg.params.size() != 1)
+			return ;
+		if (isUniqueNick(msg.params[0]))
+		{
+			clients[sock].authLevel |= 1;
+			clients[sock].nick = msg.params[0];
+		}
 	}
-	else if (!(clients[sock].authLevel & 4) && buff.substr(0, 5) == "USER ")
+	if (msg.command == "USER")
 	{
-		clients[sock].login = buff.substr(5);
-		clients[sock].authLevel = clients[sock].authLevel | 4;
+		if (msg.params.size() != 4)
+			return ;
+		clients[sock].authLevel |= 2;
+		clients[sock].login = msg.params[0];
 	}
-	if ((clients[sock].authLevel == 7) && clients[sock].loggedIn == false)
+	if (msg.command == "PASS")
 	{
-		std::string msg = ":localhost 001 cypher :Welcome to the server ";
-		msg += clients[sock].nick;
-		msg += "!\r\n";
-		send(sock, msg.c_str(), msg.size(), 0);
-		std::cout << "Client " << clients[sock].nick << " has connected!" << std::endl;
+		if (msg.params.size() != 1)
+			return ;
+		if (msg.params[0] == passwd)
+		{
+			clients[sock].authLevel |= 4;
+		}
+	}
+	if (clients[sock].authLevel == 7)
+	{
 		clients[sock].loggedIn = true;
 	}
 }
@@ -107,6 +193,7 @@ void	Server::handleClients()
 			{
 				char	buff[512];
 				ssize_t	len = recv(fds[i].fd, &buff, sizeof(buff) - 1, 0);
+				Message	msg;
 				if (len < 0)
 				{
 					perror("recv()");
@@ -123,10 +210,23 @@ void	Server::handleClients()
 				}
 				else
 				{
-					buff[len > 0 ? ((len > 1 && buff[len - 2] == '\r') ? len - 2 : len - 1) : len] = '\0';
-					std::string tempBuff = buff;
-					if (clients[fds[i].fd].authLevel != 7 && tempBuff.size())
-						handShake(fds[i].fd, tempBuff, i);
+					
+					buff[len] = '\0';
+					msg.parse(buff);
+					if (clients[fds[i].fd].authLevel != 7)
+						handShake(fds[i].fd, msg);
+					if (clients[fds[i].fd].loggedIn)
+					{
+						if (msg.command == "PRIVMSG")
+						{
+							std::string msgSend = ":" + clients[fds[i].fd].nick + "!" + clients[fds[i].fd].login + " PRIVMSG " + msg.params[0] + " :" + msg.params[1] + "\r\n";
+							for (std::unordered_map<int, Client>::iterator it = clients.begin(); it != clients.end(); it++)
+							{
+								if (it->second.nick == msg.params[0] && it->second.loggedIn)
+									send(it->first, msgSend.c_str(), msgSend.size(), 0);
+							}
+						}
+					}
 				}
 			}
 		}

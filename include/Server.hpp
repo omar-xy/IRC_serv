@@ -19,13 +19,16 @@
 // sa_family_t -> server.sin_family 8 bits	
 // in_port_t -> server.sin_port 16 bits
 // s_addr -> server.sin_addr.s_addr 32 bits
+
+class Message;
+
 class Server 
 {
 	public:
 		Server(sa_family_t family, in_port_t port, in_addr_t addr, std::string _passwd);
 		void	handleClients();
 		void	addClient();
-		void	handShake(int sock, std::string buff, unsigned int index);
+		void	handShake(int sock, Message msg);
 		bool	isUniqueNick(std::string nick);
 	private:
 		int sock;

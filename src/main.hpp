@@ -8,24 +8,26 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <map>
 #include <poll.h>
 #include <pthread.h>
 
 #define MAX_CLIENTS 64
 
+#include "Client.hpp"
 #include "Server.hpp"
 
 
 class ApplicationException : public std::exception {
     private:
-        const char * _message;
+        const std::string _message;
 
     public:
-        ApplicationException(std::string msg) throw(): _message(msg.c_str()) {};
+        ApplicationException(std::string msg) throw(): _message(msg) {};
         ApplicationException() throw() {};
         ~ApplicationException() throw() {};
         virtual const char* what() const throw() {
-            return _message;
+            return _message.c_str();
         }
 };
 

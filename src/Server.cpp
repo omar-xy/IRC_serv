@@ -30,17 +30,6 @@ Server::Server(unsigned int port, std::string password) : _port(port), _password
     c_fds[0].events = POLLIN;
 
 
-    // // Creating thread for new connections
-    // pthread_create(&this->thr_connections, NULL, &Server::accept_new_connection, this);
-    // while (!_cliens_fds.size())
-    //     ;    
-
-    // pthread_create(&this->thr_recv, NULL, &Server::recv, this);
-    // pthread_join(this->thr_recv, NULL);
-
-    // Creating thread for handling requests
-
-
     
 }
 
@@ -56,7 +45,22 @@ void Server::accept_new_connection()
             break;
         }
     }
-    send(new_sock, "connected", 9, 0);
+    this->clients.insert(std::make_pair(new_sock, new Client(new_sock)));
+    this->clients[new_sock]->sendMessage("connected");
+}
+
+void Server::handle_message(char *msg, int cIndex)
+{
+    char *cmd;
+    Client *client;
+    (void)cIndex;
+
+    client = clients[c_fds[cIndex].fd];
+    cmd = strtok(msg, " ");
+    // if (!strcmp("NICK", cmd))
+        
+    std::cout << "Handling msg" << std::endl;
+    std::cout << cmd << std::endl;
 }
 
 void Server::receive_message(int cIndex)
@@ -74,6 +78,7 @@ void Server::receive_message(int cIndex)
     else
     {
         buffer[bytes] = 0;
+        handle_message(buffer, cIndex);
         std::cout << "Received : " << buffer << std::endl;
     }
 }

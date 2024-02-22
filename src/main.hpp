@@ -7,8 +7,12 @@
 #include <unistd.h>
 #include <iostream>
 #include <string>
+#include <vector>
 #include <poll.h>
+#include <pthread.h>
 #include "Server.hpp"
+
+#define MAX_CLIENTS 64
 
 class ApplicationException : public std::exception {
     private:

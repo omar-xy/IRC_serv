@@ -1,5 +1,12 @@
 #include "main.hpp"
 
+
+void handle_quit(int c)
+{
+    (void)c;
+    throw ApplicationException("Server quitting");
+}
+
 int main(int argc, char **argv)
 {
     if (argc != 3)
@@ -9,6 +16,7 @@ int main(int argc, char **argv)
     }
     try
     {
+        signal(SIGTERM, handle_quit);
         Server serv(atoi(argv[1]),argv[2]);
     }
     catch(const std::exception& e)

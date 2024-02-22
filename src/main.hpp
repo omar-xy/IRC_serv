@@ -10,9 +10,11 @@
 #include <vector>
 #include <poll.h>
 #include <pthread.h>
-#include "Server.hpp"
 
 #define MAX_CLIENTS 64
+
+#include "Server.hpp"
+
 
 class ApplicationException : public std::exception {
     private:

@@ -14,15 +14,13 @@ class Server {
         
         struct pollfd c_fds[MAX_CLIENTS + 1];
         
-        pthread_t thr_connections;
-        pthread_t thr_recv;
 
     public:
         Server();
         Server(unsigned int port, std::string password);
         ~Server();
 
-        static void *accept_connections(void *obj);
-        static void *recv(void *obj);
+        void accept_new_connection();
+        void receive_message(int cIndex);
         void serve_loop();
 };

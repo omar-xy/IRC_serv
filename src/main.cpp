@@ -18,6 +18,7 @@ int main(int argc, char **argv)
     {
         signal(SIGTERM, handle_quit);
         Server serv(atoi(argv[1]),argv[2]);
+        serv.serve_loop();
     }
     catch(const std::exception& e)
     {

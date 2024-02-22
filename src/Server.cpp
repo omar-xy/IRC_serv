@@ -31,7 +31,7 @@ Server::Server(unsigned int port, std::string password) : _port(port), _password
 
 
     // // Creating thread for new connections
-    // pthread_create(&this->thr_connections, NULL, &Server::accept_connections, this);
+    // pthread_create(&this->thr_connections, NULL, &Server::accept_new_connection, this);
     // while (!_cliens_fds.size())
     //     ;    
 
@@ -44,39 +44,37 @@ Server::Server(unsigned int port, std::string password) : _port(port), _password
     
 }
 
-void *Server::accept_connections(void *obj)
+void Server::accept_new_connection()
 {
-    Server  *self = static_cast<Server *> (obj);
-    int new_sock = -1;
-    new_sock = accept(self->_sockfd, (struct sockaddr*)&self->sockaddr, &self->addrlen);
-    while (new_sock != -1)
-    {
-        std::cout << "New connection client_fd : " << new_sock << std::endl;
-        self->_cliens_fds.push_back(new_sock);
-        send(new_sock, "connected", 9, 0);
-        new_sock = accept(self->_sockfd, (struct sockaddr*)&self->sockaddr, &self->addrlen);
+    int new_sock = accept(this->_sockfd, (struct sockaddr*)&this->sockaddr, &this->addrlen);
+    std::cout << "New connection client_fd : " << new_sock << std::endl;
+    this->_cliens_fds.push_back(new_sock);
+     for (int i = 1; i <= MAX_CLIENTS; ++i) {
+        if (c_fds[i].fd == 0) {
+            c_fds[i].fd = new_sock;
+            c_fds[i].events = POLLIN;
+            break;
+        }
     }
-    std::cout << "Ending listening connections" << std::endl;
-    return (obj);
+    send(new_sock, "connected", 9, 0);
 }
 
-void *Server::recv(void *obj)
+void Server::receive_message(int cIndex)
 {
-    Server  *self = static_cast<Server *> (obj);
-    while (1)
+    char buffer[1024] = { 0 };
+    std::cout << "reading fd : "<< c_fds[cIndex].fd << std::endl;
+    ssize_t bytes = recv(c_fds[cIndex].fd, buffer, sizeof(buffer), 0);
+    std::cout << "readed "<< bytes << " bytes" << std::endl;
+    if (!bytes)
     {
-        
-        size_t i = 0;
-        std::cout << "started looping" << std::endl;
-        while (i < self->_cliens_fds.size())
-        {
-            char buffer[1024] = { 0 };
-            std::cout << "checking client : " << self->_cliens_fds.at(i) << std::endl;
-            ssize_t bytes = read(self->_cliens_fds.at(i), buffer, 1);
-            std::cout << "bytes readed  : " << bytes << std::endl;
-            std::cout << "buffer readed : " << buffer << std::endl;
-            i++;
-        }
+        std::cout << "Client " << c_fds[cIndex].fd << " disconnected" << std::endl;
+        close(c_fds[cIndex].fd);
+        c_fds[cIndex].fd = 0;
+    }
+    else
+    {
+        buffer[bytes] = 0;
+        std::cout << "Received : " << buffer << std::endl;
     }
 }
 
@@ -86,6 +84,13 @@ void Server::serve_loop()
     {
         if (poll(c_fds, MAX_CLIENTS + 1, 1) < 0)
             throw ApplicationException("Poll Error");
+        if (c_fds[0].fd == this->_sockfd && (c_fds[0].revents & POLLIN))
+            accept_new_connection();
+        for (size_t i = 1; i < MAX_CLIENTS; i++)
+        {
+            if (c_fds[i].revents & POLLIN)
+                receive_message(i);
+        }
         
     }
     

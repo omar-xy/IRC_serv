@@ -9,7 +9,8 @@ class Client {
         // socklen_t addrlen;
 
         std::string name;
-        std::string user;
+        std::string username;
+        std::string realname;
         
         
 
@@ -21,11 +22,13 @@ class Client {
         void setName(std::string name);
         void setUser(std::string user);
 
+        void parseUsername(char *message);
+
         std::string getName();
         std::string getUser();
 
         void sendMessage(std::string msg);
 
-        bool is_logged();
+        bool is_registred();
 
 };

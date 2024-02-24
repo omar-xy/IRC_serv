@@ -11,11 +11,13 @@ class Server {
         socklen_t addrlen;
         int _sockfd;
 
+        struct pollfd c_fds[MAX_CLIENTS + 1];
+        
         std::vector<int> _cliens_fds;
         std::map<int, Client*> clients;
         
-        struct pollfd c_fds[MAX_CLIENTS + 1];
         
+        Client *getClientByIndex(int cIndex);
 
     public:
         Server();

@@ -1,6 +1,6 @@
 NAME = irc_serv
 CC = c++
-CFLAGS =-Wall -Wextra -Werror
+CFLAGS =-Wall -Wextra -Werror -g -fsanitize=address
 SRCDIR = src
 OBJDIR = obj
 SRCS = $(shell find $(SRCDIR) -type f -name '*.cpp')

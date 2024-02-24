@@ -25,7 +25,6 @@ Server::Server(unsigned int port, std::string password) : _port(port), _password
 
     memset(c_fds, 0, sizeof(c_fds));
 
-    // Add server socket to poll set
     c_fds[0].fd = this->_sockfd;
     c_fds[0].events = POLLIN;
 
@@ -49,6 +48,11 @@ void Server::accept_new_connection()
     this->clients[new_sock]->sendMessage("connected");
 }
 
+Client *Server::getClientByIndex(int cIndex)
+{
+    return clients[c_fds[cIndex].fd];
+}
+
 void Server::handle_message(char *msg, int cIndex)
 {
     char *cmd;
@@ -56,11 +60,16 @@ void Server::handle_message(char *msg, int cIndex)
     (void)cIndex;
 
     client = clients[c_fds[cIndex].fd];
-    cmd = strtok(msg, " ");
-    // if (!strcmp("NICK", cmd))
+    char *tmp = strdup(msg);
+    cmd = strtok(tmp, " ");
+
+    if (!strcmp("NICK", cmd))
+        client->setName(strtok(NULL, " "));
+    if (!strcmp("USER", cmd))
+        client->parseUsername(msg);
+    // if (!strcmp(""))
         
-    std::cout << "Handling msg" << std::endl;
-    std::cout << cmd << std::endl;
+    // std::cout << cmd << std::endl;
 }
 
 void Server::receive_message(int cIndex)
@@ -68,7 +77,7 @@ void Server::receive_message(int cIndex)
     char buffer[1024] = { 0 };
     std::cout << "reading fd : "<< c_fds[cIndex].fd << std::endl;
     ssize_t bytes = recv(c_fds[cIndex].fd, buffer, sizeof(buffer), 0);
-    std::cout << "readed "<< bytes << " bytes" << std::endl;
+    // std::cout << "readed "<< bytes << " bytes" << std::endl;
     if (!bytes)
     {
         std::cout << "Client " << c_fds[cIndex].fd << " disconnected" << std::endl;
@@ -78,8 +87,8 @@ void Server::receive_message(int cIndex)
     else
     {
         buffer[bytes] = 0;
-        handle_message(buffer, cIndex);
         std::cout << "Received : " << buffer << std::endl;
+        handle_message(buffer, cIndex);
     }
 }
 

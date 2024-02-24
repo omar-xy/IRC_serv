@@ -24,21 +24,47 @@ std::string Client::getUser()
 
 void Client::setName(std::string _name)
 {
+    if (_name.empty())
+        throw ApplicationException("Name cannot be empty");
     name = _name;
 }
 
 void Client::setUser(std::string _user)
 {
-    user = _user;
+    if (_user.empty())
+        throw ApplicationException("User cannot be empty");
+    username = _user;
 }
 
-bool Client::is_logged()
+bool Client::is_registred()
 {
-    return (!this->name.empty() && !this->user.empty());
+    return (!this->realname.empty() && !this->username.empty());
 }
 
 void Client::sendMessage(std::string msg)
 {
     send(this->_sockfd, msg.c_str(), msg.length(), 0);
 
+}
+
+void Client::parseUsername(char *message)
+{
+    char *tmp;
+
+    tmp = strtok(message, " ");
+    if (strcmp(tmp, "USER"))
+        return;
+    tmp = strtok(NULL, " ");
+    if (tmp && *tmp)
+        this->setUser(tmp);
+    tmp = strtok(NULL, " ");
+    tmp = strtok(NULL, " ");
+    if (!tmp || *tmp  != '*')
+        return;
+    tmp = strtok(NULL, ""); 
+    if (tmp && *tmp)
+        this->realname = tmp;
+    std::cout << "realname : " << this->realname << std::endl;
+    std::cout << "USERNAME : " << this->username << std::endl;
+    // ELSE THROw MSG FEW PARAMS
 }

@@ -8,7 +8,7 @@ class Channel{
     private:
         std::string name;
         std::string op;
-        std::vector<Client> clients;
+        std::vector<Client*> clients;
 
 
     public:
@@ -17,8 +17,9 @@ class Channel{
         std::vector<Client> getClients();
 
         void setName(std::string name);
-        void addClient(Client c);
+        void addClient(Client *c);
 
+        static void parseChannelMessage(char *msg, int cIndex);
 
         Channel();
         ~Channel();

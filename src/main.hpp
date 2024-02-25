@@ -6,6 +6,7 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 #include <iostream>
+#include <sstream>
 #include <string>
 #include <vector>
 #include <map>
@@ -17,6 +18,8 @@
 #include "Client.hpp"
 #include "Server.hpp"
 
+
+std::vector<std::string> split(const std::string &s, char delimiter);
 
 class ApplicationException : public std::exception {
     private:

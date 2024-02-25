@@ -67,7 +67,9 @@ void Server::handle_message(char *msg, int cIndex)
         client->setName(strtok(NULL, " "));
     if (!strcmp("USER", cmd))
         client->parseUsername(msg);
-    // if (!strcmp(""))
+    if (!strcmp("JOIN", cmd))
+        Channel::parseChannelMessage(msg, cIndex);
+
         
     // std::cout << cmd << std::endl;
 }

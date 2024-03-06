@@ -1,30 +1,33 @@
-SRC	=	main.cpp Server.cpp Client.cpp
+SRC		=		src/Client.cpp	\
+				src/IRCserv.cpp	\
+				src/main.cpp
 
-OBJ	=	$(SRC:.cpp=.o)
+OBJ		=		$(SRC:.cpp=.o)
 
-HEAD	=	-I./include
+NAME	=		ircserv
 
-CXXFLAGS	= -std=c++98 # -Wall -Wextra -Werror
+CXX		=		c++
 
-CXX	=	c++
+CXXFLAGS	=		-W -Wall -Wextra -std=c++98 -I./include
 
-NAME	=	ircserv
+HEADER	=		headers/IRCserv.hpp \
+				headers/Client.hpp\
+				headers/header.hpp
 
-all:	$(NAME)
+all:		$(NAME)
 
 $(NAME):	$(OBJ)
-	$(CXX) -o $(NAME) $(OBJ) $(HEAD) $(CXXFLAGS)
+		$(CXX) -o $(NAME) $(OBJ)
 
-%.o:	%.cpp $(HEAD)
-	$(CXX) -c $< -o $@ $(HEAD) $(CXXFLAGS)
+%.o:		%.cpp $(HEADER)
+		$(CXX) -c -o $@ $< $(CXXFLAGS)
 
 clean:
-	rm -f $(OBJ)
+		rm -f $(OBJ)
 
-fclean:	clean
-	rm -f $(NAME)
+fclean:		clean
+		rm -f $(NAME)
+	
+re:		fclean all
 
-run:	all
-	./$(NAME) 5000 pass
-
-re:	fclean all
+.PHONY:		all clean fclean re

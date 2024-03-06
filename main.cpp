@@ -1,16 +1,20 @@
-#include "include/Server.hpp"
-#include "include/Client.hpp"
+#include "headers/header.hpp"
 
 
-int main(int ac, char **av)
-{
-	(void)av;
+int main(int ac, char **av) {
 	if (ac != 3)
 	{
-		std::cerr << "Error: usage ./ircserv <port> <password>" << std::endl;
-		exit(1);
+		std::cerr << "Usage: ./ircserv [port] [password]" << std::endl;
+		return 1;
 	}
-	Server server = Server(AF_INET, 5000, INADDR_ANY);
-
-	std::cout << "the end" << std::endl;
+	try
+	{
+		IRCserv irc(av[1], av[2]);
+	}
+	catch (std::exception &e)
+	{
+		std::cerr << e.what() << std::endl;
+		return 1;
+	}	
+	return 0;
 }

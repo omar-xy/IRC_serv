@@ -1,4 +1,13 @@
-#include "include/Client.hpp"
+#include "headers/Client.hpp"
 
-Client::Client(int socket, std::string login, std::string nick) : socket(socket), login(login), nick(nick)
-{}
+Client::Client()
+{
+	this->sock = -1;
+	this->registered = false;
+}
+
+Client::Client(int sock)
+{
+	this->sock = sock;
+	this->registered = false;
+}

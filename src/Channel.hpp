@@ -7,7 +7,9 @@ class Client;
 class Channel{
     private:
         std::string name;
+        std::string pass;
         std::string op;
+        int fdOp;
         std::vector<Client*> clients;
 
         

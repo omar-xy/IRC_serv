@@ -110,6 +110,10 @@ void Server::serve_loop()
     }
     
 }
+bool Server::addNewChannel(Channel *channel)
+{
+    return false;
+}
 
 Server::~Server()
 {

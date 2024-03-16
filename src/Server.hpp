@@ -15,6 +15,7 @@ class Server {
         struct pollfd c_fds[MAX_CLIENTS + 1];
         
         std::vector<int> _cliens_fds;
+        // std::vector<Channel*> channels;
         std::map<int, Client*> clients;
         
         

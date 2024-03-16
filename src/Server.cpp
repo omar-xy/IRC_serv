@@ -79,7 +79,6 @@ void Server::receive_message(int cIndex)
     char buffer[1024] = { 0 };
     std::cout << "reading fd : "<< c_fds[cIndex].fd << std::endl;
     ssize_t bytes = recv(c_fds[cIndex].fd, buffer, sizeof(buffer), 0);
-    // std::cout << "readed "<< bytes << " bytes" << std::endl;
     if (!bytes)
     {
         std::cout << "Client " << c_fds[cIndex].fd << " disconnected" << std::endl;

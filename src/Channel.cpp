@@ -1,9 +1,9 @@
 #include "Channel.hpp"
 
-Channel::Channel()
-{
+// Channel::Channel()
+// {
 
-}
+// }
 
 Channel::~Channel()
 {
@@ -34,16 +34,22 @@ void Channel::parseChannelMessage(char *msg, int cIndex)
     {
         char *chName;
         char *_keys = strtok(NULL, "");
+        std::vector<std::string> keys;
         if (_keys)
+        {
             std::cout << "keys : " << _keys << std::endl;
-        std::vector<std::string> keys = split(((std::string)_keys), ' ');
-        int i = 0;
+            keys = split(((std::string)_keys), ' ');
+        }
+        unsigned long i = 0;
         chName = strtok(_channels, ",");
         while (chName != NULL)
         {
-            std::cout << "Creating channel "<< chName << std::endl;
-            // if (i >= 0 && keys)
+            std::cout << "Creating channel "<< chName ;
+            if (i >= 0 && keys.size() > i)
+                std::cout << "with pass "<< keys[i] ;
+            std::cout << std::endl;
             chName = strtok(NULL, ",");
+            i++;
         }
         
     }

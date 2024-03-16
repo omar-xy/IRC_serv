@@ -10,6 +10,7 @@ class Channel{
         std::string op;
         std::vector<Client*> clients;
 
+        
 
     public:
 
@@ -21,6 +22,6 @@ class Channel{
 
         static void parseChannelMessage(char *msg, int cIndex);
 
-        Channel();
+        Channel(std::string name, std::string pass, int opFd);
         ~Channel();
 };

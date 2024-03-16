@@ -7,7 +7,6 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include "Client.hpp"
-#include "Server.hpp"
 #include <sys/types.h>
 #include <sys/poll.h>
 #include <unordered_map>

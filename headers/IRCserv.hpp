@@ -8,6 +8,10 @@
 #include <netinet/in.h>
 
 #include "Client.hpp"
+#include <sys/poll.h>
+#include <unordered_map>
+
+class	Client;
 
 class IRCserv {
 	private:
@@ -22,4 +26,5 @@ class IRCserv {
 		void	debug(std::string msg, int status);
 		void	loop();
 		void 	addClient();
+		void	registeredAction(Client &client, const std::string &buff);
 };

@@ -1,5 +1,5 @@
-#include "headers/header.hpp"
-
+#include "../headers/header.hpp"
+#include "../headers/IRCserv.hpp"
 
 int main(int ac, char **av) {
 	if (ac != 3)

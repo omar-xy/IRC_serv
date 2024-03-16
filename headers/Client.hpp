@@ -4,12 +4,11 @@
 
 class Client
 {
-	private:
+	public:
 		std::string		nick;
 		std::string		user;
-		bool			registered;
+		int			registered;
 		int				sock;
-	public:
-		Client()
+		Client();
 		Client(int sock);
 };

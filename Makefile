@@ -1,33 +1,36 @@
-SRC		=		src/Client.cpp	\
-				src/IRCserv.cpp	\
-				src/main.cpp
+NAME = irc_serv
+CC = c++
+CFLAGS =-Wall -Wextra -Werror -g -fsanitize=address
+SRCDIR = .
+HDRDIR = headers
+OBJDIR = obj
+SRCS = $(shell find $(SRCDIR) -type f -name '*.cpp')
+OBJECTS = $(patsubst $(SRCDIR)/%.c, $(OBJDIR)/%.o, $(SRCS))
+INCLUD = $(shell find $(HDRDIR) -type f -name '*.hpp')
 
-OBJ		=		$(SRC:.cpp=.o)
+.PHONY: all clean fclean re
 
-NAME	=		ircserv
+all: $(NAME)
 
-CXX		=		c++
+$(OBJDIR)/%.o: $(SRCDIR)/%.cpp $(INCLUD)
+	@mkdir -p $(@D)
+	$(CC) $(CFLAGS) -c $< -o $@
 
-CXXFLAGS	=		-W -Wall -Wextra -std=c++98 -I./include
+$(NAME): $(OBJECTS) $(LIB)
+	$(CC) $(CFLAGS) $(OBJECTS) $(LIB) -o $(NAME) $(LDFLAGS)
 
-HEADER	=		headers/IRCserv.hpp \
-				headers/Client.hpp\
-				headers/header.hpp
-
-all:		$(NAME)
-
-$(NAME):	$(OBJ)
-		$(CXX) -o $(NAME) $(OBJ)
-
-%.o:		%.cpp $(HEADER)
-		$(CXX) -c -o $@ $< $(CXXFLAGS)
+run: all
+	./$(NAME) 5000 x
 
 clean:
-		rm -f $(OBJ)
+	rm -rf $(OBJDIR)
 
-fclean:		clean
-		rm -f $(NAME)
-	
-re:		fclean all
+	@echo "Cleaning objects"
 
-.PHONY:		all clean fclean re
+fclean: clean
+	rm -rf $(NAME)
+	@echo "Cleaning objects and executable"
+
+re: fclean all
+
+.PRECIOUS: $(OBJECTS)

@@ -10,6 +10,6 @@ class Client
 		bool			registered;
 		int				sock;
 	public:
-		Client()
+		Client();
 		Client(int sock);
 };

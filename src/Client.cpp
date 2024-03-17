@@ -1,5 +1,6 @@
 #include "../headers/Client.hpp"
 class Client;
+
 Client::Client()
 {
 	this->sock = -1;

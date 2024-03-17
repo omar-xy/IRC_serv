@@ -151,17 +151,61 @@ void	IRCserv::loop()
 					if (tempStatus == clients[fds[i].fd].registered && clients[fds[i].fd].registered != 3)
 					{
 						write(fds[i].fd, "ERROR :You have not registered\n", 31);
-						continue;
+					continue;
 					}
 					else
 					{
 						// here we can add application logic
 						std::cout << "Received: " << buff << std::endl;
+						handle_message(buff, clients[fds[i].fd]);
 					}
 				}
 			}
 		}
 	}
+}
+
+void IRCserv::handle_message(char *msg, Client client)
+{
+	char *cmd;
+	char *tmp = strdup(msg);
+    cmd = strtok(tmp, " ");
+
+    if (!strcmp("JOIN", cmd))
+        this->parseChannelMessage(msg, client);
+}
+void IRCserv::parseChannelMessage(char *msg, Client client)
+{
+    char *tmp;
+	(void) client;
+    tmp = strtok(msg, " ");
+    if (strcmp("JOIN", tmp))
+        return;
+    char *_channels = strtok(NULL, " ");
+    std::cout << "channels : " << _channels << std::endl;
+    if (_channels && *_channels)
+    {
+        char *chName;
+        char *_keys = strtok(NULL, "");
+        std::vector<std::string> keys;
+        if (_keys)
+        {
+            std::cout << "keys : " << _keys << std::endl;
+            keys = split(((std::string)_keys), ' ');
+        }
+        unsigned long i = 0;
+        chName = strtok(_channels, ",");
+        while (chName != NULL)
+        {
+            std::cout << "Creating channel "<< chName ;
+            if (i >= 0 && keys.size() > i)
+                std::cout << "with pass "<< keys[i] ;
+            std::cout << std::endl;
+            chName = strtok(NULL, ",");
+            i++;
+        }
+        
+    }
 }
 
 void 	IRCserv::addClient()

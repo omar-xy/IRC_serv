@@ -11,6 +11,8 @@
 #include <sys/poll.h>
 #include <unordered_map>
 
+std::vector<std::string> split(const std::string &s, char delimiter);
+
 class	Client;
 
 class IRCserv {
@@ -20,6 +22,11 @@ class IRCserv {
 		int					sock;
 		std::vector<pollfd>	fds;
 		std::unordered_map<int, Client>	clients;		
+		void handle_message(char *msg, Client client);
+        void parseChannelMessage(char *msg, Client client);
+
+
+
 	public:
 		IRCserv(std::string port, std::string password);
 		void	init();

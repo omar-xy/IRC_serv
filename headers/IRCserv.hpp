@@ -11,10 +11,12 @@
 #include "Client.hpp"
 #include <sys/poll.h>
 #include <unordered_map>
+#include <iterator>
 
 std::vector<std::string> split(const std::string &s, char delimiter);
 
 class	Client;
+class	Channel;
 
 class IRCserv {
 	private:
@@ -22,10 +24,15 @@ class IRCserv {
 		int					port;
 		int					sock;
 		std::vector<pollfd>	fds;
-		std::unordered_map<int, Client>	clients;		
+		std::unordered_map<int, Client>	clients;
+
+		std::vector<Channel> channels;
+
 		void handle_message(char *msg, Client client);
         void parseChannelMessage(char *msg, Client client);
 
+		bool isChannelExisiting(std::string name);
+		void addNewChannel(std::string name, char *pass, Client client);
 
 
 	public:

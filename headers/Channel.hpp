@@ -24,6 +24,6 @@ class Channel{
 
         // static void parseChannelMessage(char *msg, Client client);
 
-        Channel(std::string name, std::string pass, int opFd);
+        Channel(std::string name, char *pass, Client client);
         ~Channel();
 };

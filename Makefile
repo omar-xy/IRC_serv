@@ -10,7 +10,7 @@ NAME	=		ircserv
 
 CXX		=		c++
 
-CXXFLAGS	=		-W -Wall -Wextra -std=c++98 -I./include
+CXXFLAGS	=		-W -Wall -Wextra -std=c++98 -I./include -g3 -fsanitize=address
 
 HEADER	=		headers/IRCserv.hpp \
 				headers/Channel.hpp\
@@ -20,7 +20,7 @@ HEADER	=		headers/IRCserv.hpp \
 all:		$(NAME)
 
 $(NAME):	$(OBJ)
-		$(CXX) -o $(NAME) $(OBJ)
+		$(CXX) -o $(NAME) $(OBJ) $(CXXFLAGS)
 
 %.o:		%.cpp $(HEADER)
 		$(CXX) -c -o $@ $< $(CXXFLAGS)

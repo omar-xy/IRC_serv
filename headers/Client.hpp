@@ -11,4 +11,7 @@ class Client
 		int				sock;
 		Client();
 		Client(int sock);
+
+		void send_message(char *msg);
+
 };

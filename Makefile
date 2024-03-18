@@ -1,4 +1,6 @@
 SRC		=		src/Client.cpp	\
+				src/Channel.cpp	\
+				src/utils.cpp	\
 				src/IRCserv.cpp	\
 				src/main.cpp
 
@@ -11,6 +13,7 @@ CXX		=		c++
 CXXFLAGS	=		-W -Wall -Wextra -std=c++98 -I./include
 
 HEADER	=		headers/IRCserv.hpp \
+				headers/Channel.hpp\
 				headers/Client.hpp\
 				headers/header.hpp
 
@@ -29,5 +32,8 @@ fclean:		clean
 		rm -f $(NAME)
 	
 re:		fclean all
+
+run: all
+	./$(NAME) 8000 xxx
 
 .PHONY:		all clean fclean re

@@ -10,6 +10,7 @@ IRCserv::IRCserv(std::string port, std::string password)
 	if (!password.length())
 		throw std::invalid_argument("Invalid password");
 	this->password = password;
+	this->hostname = (std::string) (SERVER_PREFIX) + (std::string)(SERVER_SUFFIX);
 	std::cout << "Server started on port " << this->port << " with password " << this->password << std::endl;
 	init();
 }
@@ -259,6 +260,11 @@ void IRCserv::parseChannelMessage(char *msg, Client client)
         }
         
     }
+}
+
+std::string IRCserv::getHostName()
+{
+	return (this->hostname);
 }
 
 void 	IRCserv::addClient()

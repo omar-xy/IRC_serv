@@ -18,6 +18,10 @@ std::vector<std::string> split(const std::string &s, char delimiter);
 class	Client;
 class	Channel;
 
+#define SERVER_PREFIX "IRC"
+#define SERVER_SUFFIX "localhost"
+#define SERVER_HOSTNAME SERVER_PREFIX + SERVER_SUFFIX
+
 class IRCserv {
 	private:
 		std::string			password;
@@ -25,14 +29,16 @@ class IRCserv {
 		int					sock;
 		std::vector<pollfd>	fds;
 		std::unordered_map<int, Client>	clients;
+		std::string			hostname;
 
-		std::vector<Channel> channels;
+		std::vector<Channel*> channels;
 
 		void handle_message(char *msg, Client client);
         void parseChannelMessage(char *msg, Client client);
 
-		bool isChannelExisiting(std::string name);
+		Channel *isChannelExisiting(std::string name);
 		void addNewChannel(std::string name, char *pass, Client client);
+		std::string getHostName();
 
 
 	public:

@@ -12,12 +12,21 @@ class Channel{
         int fdOp;
         std::vector<Client*> clients;
 
+        std::string topic;
+        std::string topic_usersetter;
+        std::string topic_nicksetter;
+        int topic_set_timestamp;
+
         
 
     public:
 
         std::string getName();
-        std::vector<Client> getClients();
+        std::string getTopicUserSetter();
+        std::string getTopicNickSetter();
+        std::string getTopicTimestamp();
+        std::string getTopic();
+        std::vector<Client*> getClients();
 
         void setName(std::string name);
         void addClient(Client *c);

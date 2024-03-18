@@ -13,6 +13,11 @@ class Client
 		Client();
 		Client(int sock);
 
+		void send_message(std::string msg);
 		void send_message(char *msg);
+		std::string getIpAddress();
+
+		std::string getFullname();
+
 
 };

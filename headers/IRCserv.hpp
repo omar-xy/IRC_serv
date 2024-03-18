@@ -26,5 +26,5 @@ class IRCserv {
 		void	debug(std::string msg, int status);
 		void	loop();
 		void 	addClient();
-		void	registeredAction(Client &client, const std::string &buff);
+		void	registeredAction(Client &client, std::string &buff);
 };

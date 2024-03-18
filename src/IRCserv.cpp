@@ -40,76 +40,105 @@ void	IRCserv::debug(std::string msg, int status)
 	if (status < 0)
 		throw std::runtime_error(msg);
 }
+int	countWords(const std::string &str)
+{
+	int count = 0;
+	bool inWord = false;
+	for (size_t i = 0; i < str.length(); i++)
+	{
+		if (str[i] == ' ')
+			inWord = false;
+		else if (inWord == false)
+		{
+			inWord = true;
+			count++;
+		}
+	}
+	return count;
+}
 
-void	IRCserv::registeredAction(Client &client, const std::string &buff)
+
+void	IRCserv::registeredAction(Client &client, std::string &buff)
 {
 	if (client.registered == 0)
 	{
 		size_t pos = buff.find("PASS");
-		if (pos != std::string::npos)
+		if (pos != std::string::npos && pos == 0)
 		{
-			pos += 5;
-			std::string pass = buff.substr(pos);
-			if (pass.size() >= 2)
+			if (buff.length() < 6 || buff[4] != ' ' || countWords(buff) != 2)
 			{
-				pass.pop_back();
-			}	
-				
-			
-			std::cout << "Password: " << pass << ", len:" << pass.length()  << std::endl;
+				write(client.sock, "ERROR :Invalid password\n", 25);
+				return;
+			}
+			std::string pass = buff.substr(pos + 5);
+			if (countWords(pass) > 1)
+			{
+				write(client.sock, "ERROR :Invalid password\n", 25);
+				return;
+			}
 			if (pass == password)
 				client.registered = 1;
-			else
-				std::cerr << "Invalid password" << std::endl;
 		}
-		else
-			return ;
 	}
 	else if (client.registered == 1)
 	{
-		size_t pos = buff.find("USER");
-		if (pos != std::string::npos)
+		size_t pos = buff.find("NICK");
+		if (pos != std::string::npos && pos == 0)
 		{
-			pos += 5;
-			std::string user = buff.substr(pos, buff.find("\r\n", pos) - pos);
-			for (size_t i = 0; i < clients.size(); i++)
+			bool useLabel = false;
+			std::string temp = buff;
+			if (temp.find("\nUSER") != std::string::npos)
+				useLabel = true;
+			if (useLabel)
 			{
-				if (clients[i].user == user)
+				temp = temp.substr(temp.find("USER"));
+				buff.erase(buff.find("\nUSER"));
+			}
+
+			if (buff.length() < 6 || buff[4] != ' ' || countWords(buff) != 2)
+			{
+				write(client.sock, "ERROR :Invalid nickname\n", 25);
+				return;
+			}
+			std::string nick = buff.substr(pos + 5);
+			// let's check if nickname is valid
+			if (countWords(nick) > 1)
+			{
+				write(client.sock, "ERROR :Invalid nickname\n", 25);
+				return;
+			}
+			// let's check if nickname is already taken
+			for (std::unordered_map<int, Client>::iterator it = clients.begin(); it != clients.end(); it++)
+			{
+				if (it->second.nick == nick)
 				{
-					std::string response = "433 * " + user + " :Nickname is already in use\r\n";
-					send(client.sock, response.c_str(), response.size(), 0);
-					return ;
+					write(client.sock, "ERROR :Nickname is already taken\n", 33);
+					return;
 				}
 			}
-			client.user = user;
+			client.nick = nick;
 			client.registered = 2;
+			if (useLabel)
+				goto label;
 		}
 	}
 	else if (client.registered == 2)
 	{
-		size_t pos = buff.find("NICK");
-		if (pos != std::string::npos)
+		label:
+		size_t pos = buff.find("USER");
+		if (pos != std::string::npos && pos == 0)
 		{
-			pos = buff.find(" ", pos);
-			if (pos == std::string::npos)
-				return ;
-			pos++;
-			size_t tempPos = buff.find(" ", pos);
-			if (tempPos == std::string::npos)
-				return ;
-			std::string nick = buff.substr(pos, tempPos - pos);
-			pos = tempPos;
-			pos = buff.find(" ", pos);
-			if (pos == std::string::npos)
-				return ;
-			pos++;
-			pos = buff.find(" ", pos);
-			if (pos == std::string::npos)
-				return ;
-			client.nick = nick;
+			if (buff.length() < 6 || buff[4] != ' ' || countWords(buff) != 5) // example: `USER guest 0 * :Ronnie`, where 0 is mode, * is realname and Ronnie Reagan is real name
+			{
+				write(client.sock, "ERROR :Invalid user\n", 21);
+				return;
+			}
+			
+			std::string user = buff.substr(pos + 5, buff.find(' ', pos + 5) - pos - 5);
+			client.user = user;
 			client.registered = 3;
 		}
-	}			
+	}
 }
 
 void	IRCserv::loop()
@@ -145,15 +174,21 @@ void	IRCserv::loop()
 				else
 				{
 					buff[len] = 0;
+					// remove tailing of limechat client and nc client
+					if (buff[len - 1] == '\n')
+						buff[len - 1] = 0;
+					if (buff[len - 2] == '\r')
+						buff[len - 2] = 0;
+					std::string temp = buff;
 					int tempStatus = clients[fds[i].fd].registered;
 					if (clients[fds[i].fd].registered < 3)
-						registeredAction(clients[fds[i].fd], buff);
+						registeredAction(clients[fds[i].fd], temp);
 					if (tempStatus == clients[fds[i].fd].registered && clients[fds[i].fd].registered != 3)
 					{
 						write(fds[i].fd, "ERROR :You have not registered\n", 31);
 						continue;
 					}
-					else
+					else if (tempStatus == 3)
 					{
 						// here we can add application logic
 						std::cout << "Received: " << buff << std::endl;

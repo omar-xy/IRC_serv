@@ -71,6 +71,10 @@ void	IRCserv::registeredAction(Client &client, std::string &buff)
 				return;
 			}
 			std::string pass = buff.substr(pos + 5);
+			while (pass[pass.length() - 1] == ' ')
+				pass = pass.substr(0, pass.length() - 1);
+			while (pass[0] == ' ')
+				pass = pass.substr(1);
 			if (countWords(pass) > 1)
 			{
 				write(client.sock, "ERROR :Invalid password\n", 25);
@@ -101,6 +105,10 @@ void	IRCserv::registeredAction(Client &client, std::string &buff)
 				return;
 			}
 			std::string nick = buff.substr(pos + 5);
+			while (nick[0] == ' ')
+				nick = nick.substr(1);
+			while (nick[nick.length() - 1] == ' ')
+				nick = nick.substr(0, nick.length() - 1);
 			// let's check if nickname is valid
 			if (countWords(nick) > 1)
 			{
@@ -135,8 +143,17 @@ void	IRCserv::registeredAction(Client &client, std::string &buff)
 			}
 			
 			std::string user = buff.substr(pos + 5, buff.find(' ', pos + 5) - pos - 5);
+			while (user[0] == ' ')
+				user = user.substr(1);
+			while (user[user.length() - 1] == ' ')
+				user = user.substr(0, user.length() - 1);
 			client.user = user;
 			client.registered = 3;
+			// let's get the host name
+			client.hostname = buff.substr(buff.find(' ', pos + 5) + 1);
+			client.hostname = client.hostname.substr(0, client.hostname.find(' '));
+			std::cout << "Client registered: " << client.nick << " " << client.user << " " << client.hostname << std::endl;
+			std::cout << "buff: " << buff << std::endl;
 		}
 	}
 }

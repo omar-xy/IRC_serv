@@ -7,6 +7,7 @@ class Client
 	public:
 		std::string		nick;
 		std::string		user;
+		std::string		hostname;
 		int			registered;
 		int				sock;
 		Client();

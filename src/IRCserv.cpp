@@ -251,10 +251,22 @@ void IRCserv::parseChannelMessage(char *msg, Client client)
         while (chName != NULL)
         {
 			char *pass = NULL;
+			std::string channelName = chName;
             std::cout << "Creating channel "<< chName ;
+			if (channelName[0] == '#')
+			{
+				if (!channelName[1])
+				{
+					client.send_message(ERR_NEEDMOREPARAMS(client.nick, this->getHostName()));
+					return;
+				}
+			}
+			else {
+				channelName = "#" + channelName;	
+			}
             if (i >= 0 && keys.size() > i)
 				pass = (char *)keys[i].c_str();
-			this->addNewChannel(chName, pass, client);
+			this->addNewChannel(channelName, pass, client);
             chName = strtok(NULL, ",");
             i++;
         }

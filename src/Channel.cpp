@@ -16,13 +16,13 @@ Channel::Channel(std::string name, char *pass, Client client)
     if (pass)
         this->pass = pass;
     this->fdOp = client.sock;
-    this->clients.push_back(&client);
+    this->clients.push_back(client);
     this->topic_nicksetter = client.nick;
     this->topic_usersetter = client.user;
     this->topic_set_timestamp = time(NULL);
 }
 
-std::vector<Client*> Channel::getClients()
+std::vector<Client> Channel::getClients()
 {
     return (this->clients);
 }
@@ -72,26 +72,59 @@ Channel *IRCserv::isChannelExisiting(std::string name)
 	return NULL;
 }
 
+std::string Channel::getListClients()
+{
+    std::string str;
+    std::vector<Client>::iterator it;
+    for (it = this->clients.begin();it < this->clients.end();it++)
+    {
+        if (it != this->clients.begin())
+            str += " ";
+        if ((it)->sock == this->fdOp)
+            str += "@";
+        str += (it)->nick;
+    }
+    std::cout << "Clients list of " << this->name << "  : " << str << std::endl;
+    return str;
+}
+
+void Channel::addClient(Client &client)
+{
+    this->clients.push_back(client);
+}
+
+void Channel::rpl_join(Client &client)
+{
+    std::vector<Client>::iterator it;
+    for (it = this->clients.begin();it < this->clients.end();it++)
+    {
+        it->send_message(RPL_JOIN(client.nick, client.user, this->getName(), client.getIpAddress()));
+    }
+}
+
 void IRCserv::addNewChannel(std::string name,char *pass, Client client)
 {
     Channel *channel = isChannelExisiting(name);
     if (!channel)
     {
-        this->channels.push_back(new Channel(name, pass,client));
+        channel = new Channel(name, pass,client);
+        this->channels.push_back(channel);
         client.send_message(RPL_JOIN(client.nick, client.user, name, client.getIpAddress()));
         client.send_message(RPL_MODEIS(name, this->getHostName(), "+p"));
-        client.send_message(RPL_NAMREPLY(this->getHostName(), client.nick, name, client.nick));
+        client.send_message(RPL_NAMREPLY(this->getHostName(), channel->getListClients(), channel->getName(), client.nick));
         client.send_message(RPL_ENDOFNAMES(this->getHostName(), client.nick, name));
         // std::cout << "Channel created and added" << std::endl;
     }else
     {
         std::cout << "Channel existing" << std::endl;
         //if mode is good
+        channel->addClient(client);
         client.send_message(RPL_JOIN(client.nick, client.user, name, client.getIpAddress()));
         client.send_message(RPL_TOPICDISPLAY(this->getHostName(), client.nick, name, channel->getTopic()));
-        client.send_message(RPL_TOPICWHOTIME((*channel).getTopicNickSetter(),(*channel).getTopicTimestamp(),
+        client.send_message(RPL_TOPICWHOTIME((*channel).getTopicNickSetter(), channel->getTopicTimestamp(),
             client.nick, this->getHostName(), (*channel).getName()));
-        client.send_message(RPL_NAMREPLY(this->getHostName(), client.nick, name, client.nick));
+        client.send_message(RPL_NAMREPLY(this->getHostName(), channel->getListClients(), channel->getName(), client.nick));
         client.send_message(RPL_ENDOFNAMES(this->getHostName(), client.nick, name));
+        channel->rpl_join(client);
     }
 }

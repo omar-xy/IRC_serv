@@ -10,7 +10,7 @@ class Channel{
         std::string pass;
         std::string op;
         int fdOp;
-        std::vector<Client*> clients;
+        std::vector<Client> clients;
 
         std::string topic;
         std::string topic_usersetter;
@@ -26,10 +26,13 @@ class Channel{
         std::string getTopicNickSetter();
         std::string getTopicTimestamp();
         std::string getTopic();
-        std::vector<Client*> getClients();
+        std::vector<Client> getClients();
+        std::string getListClients();
+
 
         void setName(std::string name);
-        void addClient(Client *c);
+        void addClient(Client &c);
+        void rpl_join(Client &c);
 
         // static void parseChannelMessage(char *msg, Client client);
 

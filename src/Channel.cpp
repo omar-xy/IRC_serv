@@ -15,7 +15,7 @@ Channel::Channel(std::string name, char *pass, Client client)
     this->name = name;
     if (pass)
         this->pass = pass;
-    this->fdOp = client.sock;
+    this->fdOps.push_back(client.sock);
     this->clients.push_back(client);
     this->topic_nicksetter = client.nick;
     this->topic_usersetter = client.user;
@@ -72,6 +72,18 @@ Channel *IRCserv::isChannelExisiting(std::string name)
 	return NULL;
 }
 
+bool Channel::isFdOperator(int fd)
+{
+    std::vector<int>::iterator it;
+    for (it = this->fdOps.begin(); it < this->fdOps.end(); it++)
+    {
+        if (*it == fd)
+            return true;
+    }
+    return false;
+}
+
+
 std::string Channel::getListClients()
 {
     std::string str;
@@ -80,7 +92,7 @@ std::string Channel::getListClients()
     {
         if (it != this->clients.begin())
             str += " ";
-        if ((it)->sock == this->fdOp)
+        if (this->isFdOperator((it)->sock))
             str += "@";
         str += (it)->nick;
     }
@@ -88,9 +100,21 @@ std::string Channel::getListClients()
     return str;
 }
 
-void Channel::addClient(Client &client)
+bool Channel::isClientOnChannel(Client &client)
 {
-    this->clients.push_back(client);
+    std::vector<Client>::iterator it;
+
+    for (it = this->clients.begin(); it < this->clients.end(); it++)
+        if (client.nick == it->nick)
+            return true;
+    return false;
+}
+
+bool Channel::addClient(Client &client)
+{
+    if (!isClientOnChannel(client))
+        return (this->clients.push_back(client), true);
+    return false;
 }
 
 void Channel::rpl_join(Client &client)
@@ -118,7 +142,16 @@ void IRCserv::addNewChannel(std::string name,char *pass, Client client)
     {
         std::cout << "Channel existing" << std::endl;
         //if mode is good
-        channel->addClient(client);
+        // try
+        // {
+            channel->addClient(client);
+            /* code */
+        // }
+        // catch(const ClientErrMsgException& e)
+        // {
+        //     // e._client.send_message(e.getMessage());
+        // }
+        
         client.send_message(RPL_JOIN(client.nick, client.user, name, client.getIpAddress()));
         client.send_message(RPL_TOPICDISPLAY(this->getHostName(), client.nick, name, channel->getTopic()));
         client.send_message(RPL_TOPICWHOTIME((*channel).getTopicNickSetter(), channel->getTopicTimestamp(),

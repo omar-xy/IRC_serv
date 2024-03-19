@@ -9,7 +9,7 @@ class Channel{
         std::string name;
         std::string pass;
         std::string op;
-        int fdOp;
+        std::vector<int> fdOps;
         std::vector<Client> clients;
 
         std::string topic;
@@ -20,7 +20,7 @@ class Channel{
         
 
     public:
-
+        bool isFdOperator(int fd);
         std::string getName();
         std::string getTopicUserSetter();
         std::string getTopicNickSetter();
@@ -29,9 +29,10 @@ class Channel{
         std::vector<Client> getClients();
         std::string getListClients();
 
+        bool isClientOnChannel(Client &client);
 
         void setName(std::string name);
-        void addClient(Client &c);
+        bool addClient(Client &c);
         void rpl_join(Client &c);
 
         // static void parseChannelMessage(char *msg, Client client);

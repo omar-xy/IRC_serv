@@ -1,7 +1,6 @@
 #pragma once
 
 #include "header.hpp"
-
 class Client
 {
 	public:
@@ -21,3 +20,18 @@ class Client
 
 
 };
+
+// class ClientErrMsgException : public std::exception
+// {
+//             private:
+//                 const std::string _cmessage;
+//             public:
+//                 ClientErrMsgException() throw();
+//                 ClientErrMsgException(Client &bc, std::string msg) throw();
+//                 ~ClientErrMsgException() throw();
+//                 const Client &_client;
+// 				std::string getMessage();
+//                 virtual const char* what() const throw(){
+//                     return (_cmessage.c_str());
+//                 };
+// };

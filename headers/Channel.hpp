@@ -33,7 +33,7 @@ class Channel{
 
         void setName(std::string name);
         bool addClient(Client &c);
-        void rpl_join(Client &c);
+        void send_message(Client &c, std::string message);
 
         // static void parseChannelMessage(char *msg, Client client);
 

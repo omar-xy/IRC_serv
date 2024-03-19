@@ -204,7 +204,7 @@ void	IRCserv::loop()
 					if (tempStatus == clients[fds[i].fd].registered && clients[fds[i].fd].registered != 3)
 					{
 						write(fds[i].fd, "ERROR :You have not registered\n", 31);
-					continue;
+						continue;
 					}
 					else if (tempStatus == 3)
 					{
@@ -261,8 +261,17 @@ void IRCserv::parseChannelMessage(char *msg, Client client)
 					return;
 				}
 			}
-			else {
-				channelName = "#" + channelName;	
+			else 
+			{
+				if (channelName.compare("0")) 
+				{
+					client.send_message(ERR_BADCHANNELNAME(client.nick, this->getHostName(), channelName));
+					return;
+				}
+				else 
+				{
+					
+				}
 			}
             if (i >= 0 && keys.size() > i)
 				pass = (char *)keys[i].c_str();

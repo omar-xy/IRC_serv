@@ -24,6 +24,21 @@ void Client::send_message(std::string msg)
 	write(this->sock, msg.c_str(), msg.length());
 }
 
+void Client::leaveAllChannels()
+{
+	// std::vector<Channel>::iterator it;
+	// for (it = this->_channels.begin(); it < this->_channels.end(); it++)
+	// {
+	// 	it->
+	// }
+		
+}
+
+void Client::disconnect()
+{
+
+}
+
 std::string Client::getIpAddress()
 {
 	struct sockaddr_in client_addr;
@@ -37,7 +52,17 @@ std::string Client::getIpAddress()
 	return ip_address;
 }
 
-// std::string getFullname()
-// {
-// 	return this.
-// }
+Client::~Client()
+{
+}
+
+
+ClientErrMsgException::ClientErrMsgException(std::string msg, Client &client) throw() : _cmessage(msg), _client(client)
+{
+}
+
+ClientErrMsgException::~ClientErrMsgException() throw()
+{
+
+}
+

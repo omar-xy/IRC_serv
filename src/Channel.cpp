@@ -117,13 +117,11 @@ bool Channel::addClient(Client &client)
     return false;
 }
 
-void Channel::rpl_join(Client &client)
+void Channel::send_message(Client &client, std::string msg)
 {
     std::vector<Client>::iterator it;
     for (it = this->clients.begin();it < this->clients.end();it++)
-    {
-        it->send_message(RPL_JOIN(client.nick, client.user, this->getName(), client.getIpAddress()));
-    }
+        it->send_message(msg);
 }
 
 void IRCserv::addNewChannel(std::string name,char *pass, Client client)
@@ -158,6 +156,6 @@ void IRCserv::addNewChannel(std::string name,char *pass, Client client)
             client.nick, this->getHostName(), (*channel).getName()));
         client.send_message(RPL_NAMREPLY(this->getHostName(), channel->getListClients(), channel->getName(), client.nick));
         client.send_message(RPL_ENDOFNAMES(this->getHostName(), client.nick, name));
-        channel->rpl_join(client);
+        channel->send_message(client, RPL_JOIN(client.nick, client.user, channel->getName(), client.getIpAddress()));
     }
 }

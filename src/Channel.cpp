@@ -10,13 +10,13 @@ Channel::~Channel()
 
 }
 
-Channel::Channel(std::string name, char *pass, Client client)
+Channel::Channel(std::string name, char *pass, Client &client)
 {
     this->name = name;
     if (pass)
         this->pass = pass;
+    this->addClient(client);
     this->fdOps.push_back(client.sock);
-    this->clients.push_back(client);
     this->topic_nicksetter = client.nick;
     this->topic_usersetter = client.user;
     this->topic_set_timestamp = time(NULL);
@@ -112,19 +112,22 @@ bool Channel::isClientOnChannel(Client &client)
 
 bool Channel::addClient(Client &client)
 {
-    if (!isClientOnChannel(client))
-        return (this->clients.push_back(client), true);
-    return false;
+    if (isClientOnChannel(client))
+        return false;
+    this->clients.push_back(client);
+    client._channels.push_back(this);
+    return true;
 }
 
 void Channel::send_message(Client &client, std::string msg)
 {
+    (void) client;
     std::vector<Client>::iterator it;
     for (it = this->clients.begin();it < this->clients.end();it++)
         it->send_message(msg);
 }
 
-void IRCserv::addNewChannel(std::string name,char *pass, Client client)
+void IRCserv::addNewChannel(std::string name,char *pass, Client &client)
 {
     Channel *channel = isChannelExisiting(name);
     if (!channel)

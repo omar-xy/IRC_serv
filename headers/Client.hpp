@@ -1,13 +1,16 @@
 #pragma once
 
 #include "header.hpp"
+
+class Channel;
+
 class Client
 {
 	public:
 		std::string		nick;
 		std::string		user;
 		std::string		hostname;
-		std::vector<Channel> _channels;
+		std::vector<Channel *> _channels;
 		int			registered;
 		int				sock;
 		Client();

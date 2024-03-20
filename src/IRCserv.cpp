@@ -117,7 +117,7 @@ void	IRCserv::registeredAction(Client &client, std::string &buff)
 				return;
 			}
 			// let's check if nickname is already taken
-			for (std::unordered_map<int, Client>::iterator it = clients.begin(); it != clients.end(); it++)
+			for (std::map<int, Client>::iterator it = clients.begin(); it != clients.end(); it++)
 			{
 				if (it->second.nick == nick)
 				{
@@ -177,16 +177,18 @@ void	IRCserv::loop()
 				{
 					std::cerr << "Recv failed" << std::endl;
 					close(fds[i].fd);
+					int	tempFd = fds[i].fd;
 					fds.erase(fds.begin() + i);
-					clients.erase(fds[i].fd);
+					clients.erase(tempFd);
 					i--;
 				}
 				else if (len == 0)
 				{
 					std::cout << "Client disconnected" << std::endl;
 					close(fds[i].fd);
+					int	tempFd = fds[i].fd;
 					fds.erase(fds.begin() + i);
-					clients.erase(fds[i].fd);
+					clients.erase(tempFd);
 					i--;
 				}
 				else

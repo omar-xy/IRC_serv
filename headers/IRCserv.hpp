@@ -10,7 +10,6 @@
 #include "replies.hpp"
 #include "Client.hpp"
 #include <sys/poll.h>
-#include <unordered_map>
 #include <iterator>
 
 std::vector<std::string> split(const std::string &s, char delimiter);
@@ -28,7 +27,7 @@ class IRCserv {
 		int					port;
 		int					sock;
 		std::vector<pollfd>	fds;
-		std::unordered_map<int, Client>	clients;
+		std::map<int, Client>	clients;
 		std::string			hostname;
 
 		std::vector<Channel*> channels;

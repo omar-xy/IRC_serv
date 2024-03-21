@@ -1,4 +1,5 @@
 #include "../headers/IRCserv.hpp"
+#include "../headers/replies.hpp"
 
 IRCserv::IRCserv(std::string port, std::string password)
 {
@@ -117,7 +118,7 @@ void	IRCserv::registeredAction(Client &client, std::string &buff)
 				return;
 			}
 			// let's check if nickname is already taken
-			for (std::unordered_map<int, Client>::iterator it = clients.begin(); it != clients.end(); it++)
+			for (std::map<int, Client>::iterator it = clients.begin(); it != clients.end(); it++)
 			{
 				if (it->second.nick == nick)
 				{
@@ -177,16 +178,18 @@ void	IRCserv::loop()
 				{
 					std::cerr << "Recv failed" << std::endl;
 					close(fds[i].fd);
+					int	tempFd = fds[i].fd;
 					fds.erase(fds.begin() + i);
-					clients.erase(fds[i].fd);
+					clients.erase(tempFd);
 					i--;
 				}
 				else if (len == 0)
 				{
 					std::cout << "Client disconnected" << std::endl;
 					close(fds[i].fd);
+					int	tempFd = fds[i].fd;
 					fds.erase(fds.begin() + i);
-					clients.erase(fds[i].fd);
+					clients.erase(tempFd);
 					i--;
 				}
 				else
@@ -218,6 +221,7 @@ void	IRCserv::loop()
 	}
 }
 
+
 void IRCserv::handle_message(char *msg, Client client)
 {
 	char *cmd;
@@ -226,6 +230,14 @@ void IRCserv::handle_message(char *msg, Client client)
 
     if (!strcmp("JOIN", cmd))
         this->parseChannelMessage(msg, client);
+	else if (!strcmp("PASS", cmd) || !strcmp("USER", cmd))
+		client.send_message(ERR_ALREADYREGISTERED(client.nick, this->getHostName()));
+	else if (!strcmp("NICK", cmd))
+	{
+		char *nick = strtok(NULL, " ");
+		if (nick)
+			client.nick = std::string(nick);
+	}
 }
 
 void IRCserv::parseChannelMessage(char *msg, Client &client)

@@ -67,3 +67,8 @@ ClientErrMsgException::~ClientErrMsgException() throw()
 
 }
 
+const std::string ClientErrMsgException::getMessage() const
+{
+	return this->_cmessage;
+}
+

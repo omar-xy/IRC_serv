@@ -6,6 +6,8 @@ class Client;
 
 class Channel{
     private:
+
+        std::string srv_hostname;
         std::string name;
         std::string pass;
         std::string op;
@@ -37,6 +39,6 @@ class Channel{
 
         // static void parseChannelMessage(char *msg, Client client);
 
-        Channel(std::string name, char *pass, Client &client);
+        Channel(std::string name, char *pass, Client &client, std::string srv_hst);
         ~Channel();
 };

@@ -10,7 +10,7 @@ Channel::~Channel()
 
 }
 
-Channel::Channel(std::string name, char *pass, Client &client)
+Channel::Channel(std::string name, char *pass, Client &client, std::string srv_hst)
 {
     this->name = name;
     if (pass)
@@ -20,6 +20,7 @@ Channel::Channel(std::string name, char *pass, Client &client)
     this->topic_nicksetter = client.nick;
     this->topic_usersetter = client.user;
     this->topic_set_timestamp = time(NULL);
+    this->srv_hostname = srv_hst;
 }
 
 std::vector<Client> Channel::getClients()
@@ -113,7 +114,7 @@ bool Channel::isClientOnChannel(Client &client)
 bool Channel::addClient(Client &client)
 {
     if (isClientOnChannel(client))
-        return false;
+        throw ClientErrMsgException(ERR_USERONCHANNEL(this->srv_hostname, this->name, client.nick), client);
     this->clients.push_back(client);
     client._channels.push_back(this);
     return true;
@@ -132,33 +133,33 @@ void IRCserv::addNewChannel(std::string name,char *pass, Client &client)
     Channel *channel = isChannelExisiting(name);
     if (!channel)
     {
-        channel = new Channel(name, pass,client);
+        channel = new Channel(name, pass,client, this->getHostName());
         this->channels.push_back(channel);
         client.send_message(RPL_JOIN(client.nick, client.user, name, client.getIpAddress()));
-        client.send_message(RPL_MODEIS(name, this->getHostName(), "+p"));
+        client.send_message(RPL_MODEIS(name, this->getHostName(), "+sn"));
         client.send_message(RPL_NAMREPLY(this->getHostName(), channel->getListClients(), channel->getName(), client.nick));
         client.send_message(RPL_ENDOFNAMES(this->getHostName(), client.nick, name));
         // std::cout << "Channel created and added" << std::endl;
-    }else
+    }
+    else
     {
         std::cout << "Channel existing" << std::endl;
         //if mode is good
-        // try
-        // {
+        try
+        {
             channel->addClient(client);
-            /* code */
-        // }
-        // catch(const ClientErrMsgException& e)
-        // {
-        //     // e._client.send_message(e.getMessage());
-        // }
+            client.send_message(RPL_JOIN(client.nick, client.user, name, client.getIpAddress()));
+            client.send_message(RPL_TOPICDISPLAY(this->getHostName(), client.nick, name, channel->getTopic()));
+            client.send_message(RPL_TOPICWHOTIME((*channel).getTopicNickSetter(), channel->getTopicTimestamp(),
+                client.nick, this->getHostName(), (*channel).getName()));
+            client.send_message(RPL_NAMREPLY(this->getHostName(), channel->getListClients(), channel->getName(), client.nick));
+            client.send_message(RPL_ENDOFNAMES(this->getHostName(), client.nick, name));
+            channel->send_message(client, RPL_JOIN(client.nick, client.user, channel->getName(), client.getIpAddress()));
+        }
+        catch(const ClientErrMsgException &e)
+        {
+            e._client.send_message(e.getMessage());
+        }
         
-        client.send_message(RPL_JOIN(client.nick, client.user, name, client.getIpAddress()));
-        client.send_message(RPL_TOPICDISPLAY(this->getHostName(), client.nick, name, channel->getTopic()));
-        client.send_message(RPL_TOPICWHOTIME((*channel).getTopicNickSetter(), channel->getTopicTimestamp(),
-            client.nick, this->getHostName(), (*channel).getName()));
-        client.send_message(RPL_NAMREPLY(this->getHostName(), channel->getListClients(), channel->getName(), client.nick));
-        client.send_message(RPL_ENDOFNAMES(this->getHostName(), client.nick, name));
-        channel->send_message(client, RPL_JOIN(client.nick, client.user, channel->getName(), client.getIpAddress()));
     }
 }

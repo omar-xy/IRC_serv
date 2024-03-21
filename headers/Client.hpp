@@ -37,8 +37,8 @@ class ClientErrMsgException : public std::exception
             public:
                 ClientErrMsgException(std::string msg, Client &bc) throw();
                 virtual ~ClientErrMsgException() throw();
-                const Client &_client;
-				std::string getMessage();
+                Client &_client;
+				const std::string getMessage() const;
                 virtual const char* what() const throw(){
                     return (_cmessage.c_str());
                 };

@@ -227,7 +227,8 @@ void IRCserv::handle_message(char *msg, Client client)
     if (!strcmp("JOIN", cmd))
         this->parseChannelMessage(msg, client);
 }
-void IRCserv::parseChannelMessage(char *msg, Client client)
+
+void IRCserv::parseChannelMessage(char *msg, Client &client)
 {
     char *tmp;
 	(void) client;
@@ -263,14 +264,14 @@ void IRCserv::parseChannelMessage(char *msg, Client client)
 			}
 			else 
 			{
-				if (channelName.compare("0")) 
+				if (i != 0)
+				{
+					channelName = "#" + channelName;
+				}
+				else if (channelName.compare("0")) 
 				{
 					client.send_message(ERR_BADCHANNELNAME(client.nick, this->getHostName(), channelName));
 					return;
-				}
-				else 
-				{
-					
 				}
 			}
             if (i >= 0 && keys.size() > i)
@@ -283,6 +284,37 @@ void IRCserv::parseChannelMessage(char *msg, Client client)
     }
 }
 
+void IRCserv::parsePartMessage(char *msg, Client &client)
+{
+    char *tmp;
+	(void) client;
+    tmp = strtok(msg, " ");
+    if (strcmp("PART", tmp))
+        return;
+    char *_channels = strtok(NULL, " ");
+    if (_channels && *_channels)
+    {
+        char *chName;
+        char *_reasons = strtok(NULL, "");
+        std::vector<std::string> reasons;
+        if (_reasons)
+            reasons = split(((std::string)_reasons), ' ');
+        unsigned long i = 0;
+        chName = strtok(_channels, ",");
+        while (chName != NULL)
+        {
+			char *pass = NULL;
+			std::string channelName = chName;
+			
+
+
+            if (i >= 0 && reasons.size() > i)
+				pass = (char *)reasons[i].c_str();
+            chName = strtok(NULL, ",");
+            i++;
+        }
+    }
+}
 std::string IRCserv::getHostName()
 {
 	return (this->hostname);

@@ -251,7 +251,7 @@ char *tmp;
 tmp = strtok(msg, " ");
 if (strcmp("PRIVMSG", tmp))
     return;
-char *target = strtok(NULL, " ");
+char *target = strtok(NULL, ":");
 if (!target)
 {
     client.send_message(":" + this->getHostName() + " 411 " + client.nick + " :No recipient given\r\n");
@@ -269,6 +269,7 @@ if (!message)
 bool recipientFound = false;
 for (std::map<int, Client>::iterator it = clients.begin(); it != clients.end(); ++it) {
     if (it->second.nick == target) {
+		std::string msg_sent = client.nick + ":"+ message + "\r\n";
         it->second.send_message(message);
         recipientFound = true;
         break;

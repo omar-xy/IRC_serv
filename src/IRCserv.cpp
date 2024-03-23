@@ -238,6 +238,64 @@ void IRCserv::handle_message(char *msg, Client client)
 		if (nick)
 			client.nick = std::string(nick);
 	}
+	else if (!strcmp("PRIVMSG", cmd))
+	{
+		this->parsePRIVMSG(msg, client);
+	}
+}
+
+void IRCserv::parsePRIVMSG(char *msg, Client &client)
+{
+char *tmp;
+(void) client;
+tmp = strtok(msg, " ");
+if (strcmp("PRIVMSG", tmp))
+    return;
+char *target = strtok(NULL, " ");
+if (!target)
+{
+    client.send_message(":" + this->getHostName() + " 411 " + client.nick + " :No recipient given\r\n");
+    return;
+}
+char *message = strtok(NULL, "");
+if (!message)
+{
+    client.send_message(":" + this->getHostName() + " 412 " + client.nick + " :No text to send\r\n");
+    return;
+}
+
+// Assuming clients is your map of Client objects
+// and channels is your vector of Channel pointers
+bool recipientFound = false;
+for (std::map<int, Client>::iterator it = clients.begin(); it != clients.end(); ++it) {
+    if (it->second.nick == target) {
+        it->second.send_message(message);
+        recipientFound = true;
+        break;
+    }
+}
+
+if (!recipientFound) {
+    for (std::vector<Channel*>::iterator it = channels.begin(); it != channels.end(); ++it) {
+        if ((*it)->getName() == target) {
+            if ((*it)->is_member(client)) {
+                (*it)->send_message(client, message);
+            } else {
+                client.send_message(":" + this->getHostName() + " 404 " + client.nick + " " + (*it)->getName() + " :Cannot send to channel\r\n");
+            }
+            recipientFound = true;
+            break;
+        }
+    }
+}
+
+if (!recipientFound) {
+    client.send_message(":" + this->getHostName() + " 401 " + client.nick + " " + target + " :No such nick/channel\r\n");
+}
+
+std::cout << "target : " << target << std::endl;
+std::cout << "message : " << message << std::endl;
+	
 }
 
 void IRCserv::parseChannelMessage(char *msg, Client &client)

@@ -163,3 +163,16 @@ void IRCserv::addNewChannel(std::string name,char *pass, Client &client)
         
     }
 }
+
+bool Channel::is_member(Client &client)
+{
+    std::vector<Client>::iterator it;
+    for (it = this->clients.begin(); it < this->clients.end(); it++)
+    {
+        if (client.nick == it->nick)
+            return true;
+    }
+    return false;
+}
+
+

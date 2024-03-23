@@ -264,8 +264,6 @@ if (!message)
     return;
 }
 
-// Assuming clients is your map of Client objects
-// and channels is your vector of Channel pointers
 bool recipientFound = false;
 for (std::map<int, Client>::iterator it = clients.begin(); it != clients.end(); ++it) {
     if (it->second.nick == target) {

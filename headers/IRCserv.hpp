@@ -35,6 +35,7 @@ class IRCserv {
 		void handle_message(char *msg, Client client);
         void parseChannelMessage(char *msg, Client &client);
 		void parsePartMessage(char *msg, Client &client);
+		void parsePRIVMSG(char *msg, Client &Client);
 		Channel *isChannelExisiting(std::string name);
 		void addNewChannel(std::string name, char *pass, Client &client);
 		std::string getHostName();

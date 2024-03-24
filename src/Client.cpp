@@ -54,7 +54,7 @@ std::string Client::getIpAddress()
 
 Client::~Client()
 {
-	std::cout << "Client disconnecteded and deconstructor called" << std::endl;
+	// std::cout << "Client disconnecteded and deconstructor called" << std::endl;
 }
 
 

@@ -21,6 +21,7 @@ class Channel{
         std::string topic;
         std::string topic_usersetter;
         std::string topic_nicksetter;
+
         int topic_set_timestamp;
 
         bool _isChannelNameValid(std::string name);
@@ -40,6 +41,7 @@ class Channel{
         void setName(std::string name);
         bool addClient(Client &c, char *pass);
         void send_message(Client &c, std::string message);
+        bool is_member(Client &c);
 
         // static void parseChannelMessage(char *msg, Client client);
 

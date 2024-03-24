@@ -10,7 +10,7 @@ NAME	=		ircserv
 
 CXX		=		c++
 
-CXXFLAGS	=		-Werror -Wall -Wextra -std=c++98 -I./include -g3 -fsanitize=address
+CXXFLAGS	=		-Wall  -std=c++98 -I./include -g3 -fsanitize=address
 
 HEADER	=		headers/IRCserv.hpp \
 				headers/Channel.hpp\

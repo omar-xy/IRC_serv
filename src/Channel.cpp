@@ -12,15 +12,33 @@ Channel::~Channel()
 
 Channel::Channel(std::string name, char *pass, Client &client, std::string srv_hst)
 {
+    if (!this->_isChannelNameValid(name))
+        throw ClientErrMsgException(ERR_BADCHANNELNAME(client.nick, srv_hst, name), client);
     this->name = name;
+    
     if (pass)
+    {
+        this->isPasswordSet = true;
         this->pass = pass;
-    this->addClient(client);
+    }
+    else this->isPasswordSet = false;
+    this->addClient(client, pass);
     this->fdOps.push_back(client.sock);
     this->topic_nicksetter = client.nick;
     this->topic_usersetter = client.user;
     this->topic_set_timestamp = time(NULL);
     this->srv_hostname = srv_hst;
+}
+
+bool Channel::_isChannelNameValid(std::string name)
+{
+    for (size_t i = 0; i < name.length(); i++)
+    {
+        if ((i != 0 && name[i] == '#') || name[i] == ',' || name[i] == ' '
+            || name[i] == '\r' || name[i] == '\n')
+            return false;
+    }
+    return true;    
 }
 
 std::vector<Client> Channel::getClients()
@@ -111,10 +129,14 @@ bool Channel::isClientOnChannel(Client &client)
     return false;
 }
 
-bool Channel::addClient(Client &client)
+bool Channel::addClient(Client &client, char *pass)
 {
     if (isClientOnChannel(client))
         throw ClientErrMsgException(ERR_USERONCHANNEL(this->srv_hostname, this->name, client.nick), client);
+    if (this->isPasswordSet)
+        if (this->pass.compare(pass))
+            throw ClientErrMsgException(ERR_BADCHANNELKEY(client.nick, this->srv_hostname, this->name), client);
+
     this->clients.push_back(client);
     client._channels.push_back(this);
     return true;
@@ -147,7 +169,7 @@ void IRCserv::addNewChannel(std::string name,char *pass, Client &client)
         //if mode is good
         try
         {
-            channel->addClient(client);
+            channel->addClient(client, pass);
             client.send_message(RPL_JOIN(client.nick, client.user, name, client.getIpAddress()));
             client.send_message(RPL_TOPICDISPLAY(this->getHostName(), client.nick, name, channel->getTopic()));
             client.send_message(RPL_TOPICWHOTIME((*channel).getTopicNickSetter(), channel->getTopicTimestamp(),

@@ -42,6 +42,7 @@ void	IRCserv::debug(std::string msg, int status)
 	if (status < 0)
 		throw std::runtime_error(msg);
 }
+
 int	countWords(const std::string &str)
 {
 	int count = 0;
@@ -248,24 +249,19 @@ void IRCserv::parseChannelMessage(char *msg, Client &client)
     if (strcmp("JOIN", tmp))
         return;
     char *_channels = strtok(NULL, " ");
-    std::cout << "channels : " << _channels << std::endl;
     if (_channels && *_channels)
     {
         char *chName;
         char *_keys = strtok(NULL, "");
         std::vector<std::string> keys;
         if (_keys)
-        {
-            std::cout << "keys : " << _keys << std::endl;
             keys = split(((std::string)_keys), ' ');
-        }
         unsigned long i = 0;
         chName = strtok(_channels, ",");
         while (chName != NULL)
         {
 			char *pass = NULL;
 			std::string channelName = chName;
-            std::cout << "Creating channel "<< chName ;
 			if (channelName[0] == '#')
 			{
 				if (!channelName[1])

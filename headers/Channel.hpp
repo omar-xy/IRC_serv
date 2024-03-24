@@ -10,16 +10,20 @@ class Channel{
         std::string srv_hostname;
         std::string name;
         std::string pass;
+        bool        isPasswordSet;
+        bool        isInviteOnlySet;
         std::string op;
         std::vector<int> fdOps;
         std::vector<Client> clients;
+        std::vector<Client> clientsInvited;
 
+        bool        isTopicSet;
         std::string topic;
         std::string topic_usersetter;
         std::string topic_nicksetter;
         int topic_set_timestamp;
 
-        
+        bool _isChannelNameValid(std::string name);
 
     public:
         bool isFdOperator(int fd);
@@ -34,7 +38,7 @@ class Channel{
         bool isClientOnChannel(Client &client);
 
         void setName(std::string name);
-        bool addClient(Client &c);
+        bool addClient(Client &c, char *pass);
         void send_message(Client &c, std::string message);
 
         // static void parseChannelMessage(char *msg, Client client);

@@ -197,4 +197,23 @@ bool Channel::is_member(Client &client)
     return false;
 }
 
+void Channel::setInviteOnly(bool value)
+{
+    isInviteOnlySet = value;
+}
+void Channel::setKey(const std::string& newKey)
+{
+    key = newKey;
+    isPasswordSet = true;
+}
+void Channel::setTopic(const std::string& newTopic) 
+{
+    topic = newTopic;
+    isTopicSet = true;
+}
+void Channel::setUserLimit(int limit) 
+{
+    userLimit = limit;
+}
+
 

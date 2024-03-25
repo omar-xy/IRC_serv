@@ -243,8 +243,8 @@ void IRCserv::handle_message(char *msg, Client client)
 	{
 		this->parsePRIVMSG(msg, client);
 	}
-	// else if (!strcmp("MOOD" , cmd))
-		// this->handleMood(msg, client);
+	else if (!strcmp("MOOD" , cmd))
+		this->handleMood(msg, client);
 }
 
 void IRCserv::parseChannelMessage(char *msg, Client &client)

@@ -61,39 +61,77 @@ int	countWords(const std::string &str)
 }
 
 
+std::string ParseBuffToRegister(std::string &buff)
+{
+	// parse buff we will remove all extra spaces except for those comme after :
+	// we will also remove the : and leave everything after it
+	std::string temp;
+	bool inWord = false;
+	bool inColon = false;
+
+	for (size_t i = 0; i < buff.length(); i++)
+	{
+		if (isspace(buff[i]) && inWord == false)
+			continue;
+		else if (buff[i] == ':')
+		{
+			inColon = true;
+			continue;
+		}
+		else if (isspace(buff[i])&& inColon == true)
+		{
+			temp += buff[i];
+			continue;
+		}
+		else if (buff[i] == ' ')
+			inWord = false;
+		else
+			inWord = true;
+		temp += buff[i];
+	}
+	return temp;
+}
+
+std::string getFirstWord(std::string str)
+{
+	std::string temp;
+	for (size_t i = 0; i < str.length(); i++)
+	{
+		if (isspace(str[i]))
+			break;
+		temp += str[i];
+	}
+	return temp;
+}
+
 void	IRCserv::registeredAction(Client &client, std::string &buff)
 {
+	std::string temp = ParseBuffToRegister(buff);
 	if (client.registered == 0)
 	{
-		size_t pos = buff.find("PASS");
+		size_t pos = temp.find("PASS");
 		if (pos != std::string::npos && pos == 0)
 		{
-			if (buff.length() < 6 || buff[4] != ' ' || countWords(buff) != 2)
+			if (temp.length() < 6 || !isspace(temp[4]))
 			{
-				write(client.sock, "ERROR :Invalid password\n", 25);
+				client.send_message(ERR_PASSWDMISMATCH(client.nick, this->getHostName()));
 				return;
 			}
-			std::string pass = buff.substr(pos + 5);
-			while (pass[pass.length() - 1] == ' ')
-				pass = pass.substr(0, pass.length() - 1);
-			while (pass[0] == ' ')
-				pass = pass.substr(1);
-			if (countWords(pass) > 1)
-			{
-				write(client.sock, "ERROR :Invalid password\n", 25);
-				return;
-			}
+			std::string pass = temp.substr(pos + 5);
 			if (pass == password)
 				client.registered = 1;
+			else
+				client.send_message(ERR_PASSWDMISMATCH(client.nick, this->getHostName()));
 		}
+		else
+			client.send_message(ERR_PASSWDMISMATCH(client.nick, this->getHostName()));
 	}
 	else if (client.registered == 1)
 	{
-		size_t pos = buff.find("NICK");
+		size_t pos = temp.find("NICK");
 		if (pos != std::string::npos && pos == 0)
 		{
 			bool useLabel = false;
-			std::string temp = buff;
 			if (temp.find("\nUSER") != std::string::npos)
 				useLabel = true;
 			if (useLabel)
@@ -101,29 +139,23 @@ void	IRCserv::registeredAction(Client &client, std::string &buff)
 				temp = temp.substr(temp.find("USER"));
 				buff.erase(buff.find("\nUSER"));
 			}
+			if (temp.length() < 6 || !isspace(temp[4]) || countWords(temp) != 2)
+			{
+				client.send_message(ERR_NONICKNAMEGIVEN(client.nick, this->getHostName()));
+				return;
+			}
 
-			if (buff.length() < 6 || buff[4] != ' ' || countWords(buff) != 2)
+			std::string nick = temp.substr(pos + 5);
+			if (nick.find(' ') != std::string::npos)
 			{
-				write(client.sock, "ERROR :Invalid nickname\n", 25);
+				client.send_message(ERR_ERRONEUSNICKNAME(client.nick, this->getHostName()));
 				return;
 			}
-			std::string nick = buff.substr(pos + 5);
-			while (nick[0] == ' ')
-				nick = nick.substr(1);
-			while (nick[nick.length() - 1] == ' ')
-				nick = nick.substr(0, nick.length() - 1);
-			// let's check if nickname is valid
-			if (countWords(nick) > 1)
-			{
-				write(client.sock, "ERROR :Invalid nickname\n", 25);
-				return;
-			}
-			// let's check if nickname is already taken
 			for (std::map<int, Client>::iterator it = clients.begin(); it != clients.end(); it++)
 			{
 				if (it->second.nick == nick)
 				{
-					write(client.sock, "ERROR :Nickname is already taken\n", 33);
+					client.send_message(ERR_NICKNAMEINUSE(client.nick, this->getHostName()));
 					return;
 				}
 			}
@@ -132,34 +164,35 @@ void	IRCserv::registeredAction(Client &client, std::string &buff)
 			if (useLabel)
 				goto label;
 		}
+		else
+			client.send_message(ERR_NONICKNAMEGIVEN(client.nick, this->getHostName()));
 	}
 	else if (client.registered == 2)
 	{
 		label:
-		size_t pos = buff.find("USER");
+		size_t pos = temp.find("USER");
 		if (pos != std::string::npos && pos == 0)
 		{
-			if (buff.length() < 6 || buff[4] != ' ' || countWords(buff) != 5) // example: `USER guest 0 * :Ronnie`, where 0 is mode, * is realname and Ronnie Reagan is real name
+			if (temp.length() < 6 || !isspace(temp[4]) || countWords(temp) != 5)
 			{
-				write(client.sock, "ERROR :Invalid user\n", 21);
+				client.send_message(ERR_NEEDMOREPARAMS(client.nick, this->getHostName()));
 				return;
 			}
-			
-			std::string user = buff.substr(pos + 5, buff.find(' ', pos + 5) - pos - 5);
-			while (user[0] == ' ')
-				user = user.substr(1);
-			while (user[user.length() - 1] == ' ')
-				user = user.substr(0, user.length() - 1);
+			std::string user = getFirstWord(temp.substr(pos + 5));
+			std::string mode = getFirstWord(temp.substr(temp.find(user) + user.length()));
+			std::string realname = temp.substr(temp.find(mode) + mode.length());
+			if (realname[0] == ':')
+				realname = realname.substr(1);
 			client.user = user;
-			client.registered = 3;
-			// let's get the host name
-			client.hostname = buff.substr(buff.find(' ', pos + 5) + 1);
-			client.hostname = client.hostname.substr(0, client.hostname.find(' '));
-			std::cout << "Client registered: " << client.nick << " " << client.user << " " << client.hostname << std::endl;
-			std::cout << "buff: " << buff << std::endl;
+			client.mode = mode;
+			client.realname = realname;
+			client.registered = 3;			
 		}
+		else
+			client.send_message(ERR_NEEDMOREPARAMS(client.nick, this->getHostName()));
 	}
 }
+
 
 void	IRCserv::loop()
 {

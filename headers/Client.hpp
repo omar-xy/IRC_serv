@@ -10,6 +10,8 @@ class Client
 		std::string		nick;
 		std::string		user;
 		std::string		hostname;
+		std::string		realname;
+		std::string		mode;
 		std::vector<Channel *> _channels;
 		int			registered;
 		int				sock;

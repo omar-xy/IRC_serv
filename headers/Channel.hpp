@@ -47,9 +47,11 @@ class Channel{
         bool is_member(Client &c);
         void setInviteOnly(bool value);
         void setKey(const std::string& newKey);
-        void addOperator(const std::string& nickname);
         void setTopic(const std::string& newTopic);
         void setUserLimit(int limit);
+        void setTopicRestrictions(bool value);
+        void setOperator(Client &client, bool isOperator);
+        void addOperator(const std::string& nickname);
 
         // static void parseChannelMessage(char *msg, Client client);
 

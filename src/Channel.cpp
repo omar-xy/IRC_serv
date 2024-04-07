@@ -216,4 +216,19 @@ void Channel::setUserLimit(int limit)
     userLimit = limit;
 }
 
+void Channel::setTopicRestrictions(bool value)
+{
+
+}
+
+void Channel::setOperator(Client &client, bool isOperator)
+{
+
+}
+
+void Channel::addOperator(const std::string& nickname)
+{
+    
+}
+
 

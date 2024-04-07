@@ -187,6 +187,11 @@ void	IRCserv::registeredAction(Client &client, std::string &buff)
 			client.mode = mode;
 			client.realname = realname;
 			client.registered = 3;			
+
+
+			// hna azbi 
+
+			client.send_message(RPL_WELCOME(client.nick, this->getHostName()));
 		}
 		else
 			client.send_message(ERR_NEEDMOREPARAMS(client.nick, this->getHostName()));
@@ -276,8 +281,8 @@ void IRCserv::handle_message(char *msg, Client client)
 	{
 		this->parsePRIVMSG(msg, client);
 	}
-	else if (!strcmp("MOOD" , cmd))
-		this->handleMood(msg, client);
+	else if (!strcmp("MODE" , cmd))
+		this->handleMode(msg, client);
 }
 
 void IRCserv::parseChannelMessage(char *msg, Client &client)

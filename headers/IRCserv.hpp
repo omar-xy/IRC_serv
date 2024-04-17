@@ -37,6 +37,10 @@ class IRCserv {
 		void parsePartMessage(char *msg, Client &client);
 		void parsePRIVMSG(char *msg, Client &client);
 		void handleMode(char *msg, Client &client);
+
+		// --- INVITE ---
+		void handleInvite(char *msg, Client &client);
+
 		void applyModeFlags(std::string channelName, std::string modeFlags, std::string additionalParams, Client &client);
 		std::string extractKeyFromParams(std::string &additionalParams);
 		std::string extractNicknameFromParams(std::string &additionalParams);

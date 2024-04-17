@@ -40,6 +40,8 @@ class Channel{
         std::string getListClients();
 
         bool isClientOnChannel(Client &client);
+        bool isInviteOnly();
+        bool isNickInChannel(std::string nickname);
 
         void setName(std::string name);
         bool addClient(Client &c, char *pass);
@@ -52,6 +54,8 @@ class Channel{
         void setTopicRestrictions(bool value);
         void setOperator(Client &client, bool isOperator);
         void addOperator(const std::string& nickname);
+
+        void addInvited(Client &client);
 
         // static void parseChannelMessage(char *msg, Client client);
 

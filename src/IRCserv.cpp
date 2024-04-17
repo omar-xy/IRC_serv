@@ -308,6 +308,21 @@ void	IRCserv::handleInvite(char *msg, Client &client)
 		client.send_message(ERR_NOSUCHCHANNEL(client.nick, this->getHostName(), channel));
 		return;
 	}
+	if (!ch->isClientOnChannel(client))
+	{
+		client.send_message(ERR_NOTONCHANNEL(this->getHostName(), channel));
+		return;
+	}
+	if (ch->isInviteOnly() && !ch->isFdOperator(client.sock))
+	{
+		client.send_message(ERR_CHANOPRIVSNEEDED(client.nick, this->getHostName(), channel));
+		return;
+	}
+	if (ch->isNickInChannel(nick))
+	{
+		client.send_message(ERR_USERONCHANNEL(client.nick, this->getHostName(), nick));
+		return;
+	}
 	Client *invited = NULL;
 	for (std::map<int, Client>::iterator it = clients.begin(); it != clients.end(); it++)
 	{
@@ -322,23 +337,8 @@ void	IRCserv::handleInvite(char *msg, Client &client)
 		client.send_message(ERR_NOSUCHNICK(client.nick, this->getHostName(), nick));
 		return;
 	}
-	if (!ch->isClientOnChannel(client))
-	{
-		client.send_message(ERR_NOTONCHANNEL(this->getHostName(), channel));
-		return;
-	}
-	if (invited && !ch->isClientOnChannel(*invited))
-	{
-		client.send_message(ERR_USERNOTINCHANNEL(this->getHostName(), channel));
-		return;
-	}
-	if (ch->isFdOperator(client.sock))
-	{
-		invited->send_message(RPL_INVITING(client.nick, this->getHostName(), invited->nick, channel));
-		invited->send_message("INVITE " + invited->nick + " :" + channel);
-	}
-	else
-		client.send_message(ERR_CHANOPRIVSNEEDED(client.nick, this->getHostName(), channel));
+	ch->addInvited(*invited);
+	invited->send_message(RPL_INVITING(client.nick, this->getHostName(), nick, channel));
 }
 
 

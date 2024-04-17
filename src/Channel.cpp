@@ -103,6 +103,11 @@ bool Channel::isFdOperator(int fd)
 }
 
 
+void Channel::addInvited(Client &client)
+{
+    this->clientsInvited.push_back(client);
+}
+
 std::string Channel::getListClients()
 {
     std::string str;
@@ -201,6 +206,7 @@ void Channel::setInviteOnly(bool value)
 {
     isInviteOnlySet = value;
 }
+
 void Channel::setKey(const std::string& newKey)
 {
     key = newKey;
@@ -232,3 +238,19 @@ void Channel::addOperator(const std::string& nickname)
 }
 
 
+
+bool Channel::isInviteOnly()
+{
+    return isInviteOnlySet;
+}
+
+bool Channel::isNickInChannel(std::string nickname)
+{
+    std::vector<Client>::iterator it;
+    for (it = this->clients.begin(); it < this->clients.end(); it++)
+    {
+        if (it->nick == nickname)
+            return true;
+    }
+    return false;
+}

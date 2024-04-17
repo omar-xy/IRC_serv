@@ -42,7 +42,7 @@ void IRCserv::applyModeFlags(std::string channelName, std::string modeFlags, std
         client.send_message("Error: Channel does not exist.");
         return;
     }
-    bool setFlag = true; // Assume we start by setting flags
+    bool setFlag = true; // Assume we start by setting flags 
     for (int i =0; i < modeFlags.size(); i++)
     {
         flag = modeFlags[i];
@@ -59,10 +59,7 @@ void IRCserv::applyModeFlags(std::string channelName, std::string modeFlags, std
         switch  (flag)
         {
             case 'i':
-                if(setFlag)
-                    channel->setInviteOnly(setFlag);
-                else
-                    channel->setInviteOnly("");
+                channel->setInviteOnly(setFlag);
                 break;
             case 't':
                 channel->setTopicRestrictions(setFlag);

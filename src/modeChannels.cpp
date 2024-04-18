@@ -3,28 +3,22 @@
 
 void IRCserv::handleMode(char *msg, Client &client)
 {
-    char *tmp;
-    tmp = strtok(msg, " ");
-    if (strcmp("MODE", tmp))
+    char *pref;
+    pref = strtok(msg, " ");
+    char *target = strtok(NULL, " ");
+    char *addParams = strtok(NULL, "");
+    if (strcmp("MODE", pref))
         return;
-    tmp = strtok(NULL, " "); 
-    if (!tmp)
+    if (!pref || !target)
     {
-        client.send_message("Error: Channel name not provided.");
+        client.send_message(ERR_NEEDMOREPARAMS(client.nick, this->getHostName()));
         return;
     }
-    std::string channelName(tmp);
-    tmp = strtok(NULL, " ");
-    if (!tmp)
-    {
-        client.send_message("Error: Mode flags not provided.");
-        return;
-    }
-    std::string modeFlags(tmp);
+    std::string channelName(pref);
+    std::string modeFlags(target);
     std::string additionalParams = "";
-    tmp = strtok(NULL, "");
-    if (tmp)
-        additionalParams = tmp;
+    if (addParams)
+        additionalParams = addParams;
     applyModeFlags(channelName, modeFlags, additionalParams, client);
 
 }
@@ -39,7 +33,7 @@ void IRCserv::applyModeFlags(std::string channelName, std::string modeFlags, std
     Channel *channel = isChannelExisiting(channelName);
     if (!channel)
     {
-        client.send_message("Error: Channel does not exist.");
+        client.send_message(ERR_NOSUCHCHANNEL(this->getHostName(), channelName, client.nick));
         return;
     }
     bool setFlag = true; // Assume we start by setting flags 
@@ -86,7 +80,7 @@ void IRCserv::applyModeFlags(std::string channelName, std::string modeFlags, std
                     channel->setUserLimit(0);
                 break;
             default :
-                client.send_message("Error: Unknown mode flag.");
+                client.send_message(ERR_UNKNOWNMODE(client.nick, this->hostname, channelName, flag));
         }
     }
 }

@@ -6,16 +6,17 @@ void IRCserv::handleMode(char *msg, Client &client)
     char *pref;
     pref = strtok(msg, " ");
     char *target = strtok(NULL, " ");
+    char *flag = strtok(NULL, " ");
     char *addParams = strtok(NULL, "");
-    if (strcmp("MODE", pref))
+    if (!pref || strcmp("MODE", pref))
         return;
-    if (!pref || !target)
+    if (!flag || !target)
     {
         client.send_message(ERR_NEEDMOREPARAMS(client.nick, this->getHostName()));
         return;
     }
-    std::string channelName(pref);
-    std::string modeFlags(target);
+    std::string channelName(target);
+    std::string modeFlags(flag);
     std::string additionalParams = "";
     if (addParams)
         additionalParams = addParams;
@@ -36,7 +37,7 @@ void IRCserv::applyModeFlags(std::string channelName, std::string modeFlags, std
         client.send_message(ERR_NOSUCHCHANNEL(this->getHostName(), channelName, client.nick));
         return;
     }
-    bool setFlag = true; // Assume we start by setting flags 
+    bool setFlag = true;
     for (int i =0; i < modeFlags.size(); i++)
     {
         flag = modeFlags[i];
@@ -69,8 +70,10 @@ void IRCserv::applyModeFlags(std::string channelName, std::string modeFlags, std
                 break;
             case 'o':
                 nickname = additionalParams;
-                // channel->is_member(client.)
-                // channel->setOperator(client, setFlag);
+                if (!channel->is_member(client))
+                    client.send_message(ERR_NOSUCHNICK(this->getHostName(), channelName, nickname));
+                else
+                    channel->setOperator(client, setFlag);
                 break;
             case 'l':
                 limit = atoi(additionalParams.c_str());

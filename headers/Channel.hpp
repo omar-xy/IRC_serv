@@ -12,6 +12,7 @@ class Channel{
         std::string pass;
         bool        isPasswordSet;
         bool        isInviteOnlySet;
+        bool        _isOperator;
         std::string op;
         std::vector<int> fdOps;
         std::vector<Client> clients;
@@ -38,6 +39,7 @@ class Channel{
         std::string getTopic();
         std::vector<Client> getClients();
         std::string getListClients();
+        // Client &getAclient(std::string nickname);wanted to added it for the addop
 
         void eraseInvitedClient(Client &client);
 

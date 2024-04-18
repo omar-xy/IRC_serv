@@ -7,6 +7,7 @@
 
 Channel::~Channel()
 {
+    this->_isOperator = false;
 
 }
 
@@ -58,6 +59,18 @@ std::vector<Client> Channel::getClients()
 {
     return (this->clients);
 }
+
+// Client &Channel::getAclient(std::string nickname)
+// {
+//     std::vector<Client>::iterator it;
+//     for (it = this->clients.begin(); it < this->clients.end(); it++)
+//     {
+//         if (nickname == it->nick)
+//         {
+//             return (*it);
+//         }
+//     }
+// }
 
 std::string Channel::getName()
 {
@@ -262,17 +275,20 @@ void Channel::setUserLimit(int limit)
 
 void Channel::setTopicRestrictions(bool value)
 {
-
+    this->isTopicSet = true;
 }
 
 void Channel::setOperator(Client &client, bool isOperator)
 {
-
+    this->fdOps.push_back(client.sock);
+    this->_isOperator = true;
 }
 
 void Channel::addOperator(const std::string& nickname)
 {
-    
+    // bool set = this->isClientOnChannel(getAclient(nickname));
+    // if (set)
+    //     this->
 }
 
 

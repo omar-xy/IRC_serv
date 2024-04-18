@@ -47,20 +47,18 @@ class IRCserv {
 		// --- TOPIC ---
 		void handleTopic(char *msg, Client &client);
 
-		void applyModeFlags(std::string channelName, std::string modeFlags, std::string additionalParams, Client &client);
-		std::string extractKeyFromParams(std::string &additionalParams);
-		std::string extractNicknameFromParams(std::string &additionalParams);
+		std::string getHostName();
 		Channel *isChannelExisiting(std::string name);
 		void addNewChannel(std::string name, char *pass, Client &client);
-		std::string getHostName();
+		void applyModeFlags(std::string channelName, std::string modeFlags, std::string additionalParams, Client &client);
 		void	inviteClinetToChannel(Client &invitedClient, Channel &channel, Client &client);
-		Client *isClientExisiting(std::string name);
 		bool isValidNick(std::string nick);
 		std::string removeTail(std::string buff);
 
 
 	public:
 		IRCserv(std::string port, std::string password);
+		Client *isClientExisiting(std::string name);
 		void	init();
 		void	debug(std::string msg, int status);
 		void	loop();

@@ -62,25 +62,40 @@ void IRCserv::applyModeFlags(std::string channelName, std::string modeFlags, std
             case 'k':
                 if (setFlag)
                 {
-                    key = additionalParams;
-                    channel->setKey(key);
+                    if (additionalParams.empty())
+                        client.send_message(ERR_NEEDMOREPARAMS(client.nick, this->getHostName()));
+                    else
+                    {
+                        key = additionalParams;
+                        channel->setKey(key);
+                    }
                 }
                 else
                     channel->setKey("");
                 break;
             case 'o':
-                nickname = additionalParams;
-                if (!channel->is_member(client))
-                    client.send_message(ERR_NOSUCHNICK(this->getHostName(), channelName, nickname));
+                if (additionalParams.empty())
+                    client.send_message(ERR_NEEDMOREPARAMS(client.nick, this->getHostName()));
                 else
-                    channel->setOperator(client, setFlag);
+                {
+                    nickname = additionalParams;
+                    if (!channel->is_member(client))
+                        client.send_message(ERR_NOSUCHNICK(this->getHostName(), channelName, nickname));
+                    else
+                        channel->setOperator(client, setFlag);
+                }
                 break;
             case 'l':
-                limit = atoi(additionalParams.c_str());
-                if (limit && setFlag)
-                    channel->setUserLimit(limit);
+                if (additionalParams.empty())
+                    client.send_message(ERR_NEEDMOREPARAMS(client.nick, this->getHostName()));
                 else
-                    channel->setUserLimit(0);
+                {
+                    limit = atoi(additionalParams.c_str());
+                    if (limit && setFlag)
+                        channel->setUserLimit(limit);
+                    else
+                        channel->setUserLimit(0);
+                }
                 break;
             default :
                 client.send_message(ERR_UNKNOWNMODE(client.nick, this->hostname, channelName, flag));

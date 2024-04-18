@@ -39,7 +39,6 @@ class Channel{
         std::string getTopic();
         std::vector<Client> getClients();
         std::string getListClients();
-        // Client &getAclient(std::string nickname);wanted to added it for the addop
 
         void eraseInvitedClient(Client &client);
 

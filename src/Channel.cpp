@@ -286,7 +286,7 @@ void Channel::setOperator(Client &client, bool isOperator)
 
 void Channel::addOperator(const std::string& nickname)
 {
-    // bool set = this->isClientOnChannel(getAclient(nickname));
+    // bool set = this->isClientOnChannel(*isClientExisiting(nickname));
     // if (set)
     //     this->
 }

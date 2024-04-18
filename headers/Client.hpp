@@ -13,6 +13,7 @@ class Client
 		std::string		realname;
 		std::string		mode;
 		std::vector<Channel *> _channels;
+		std::vector<std::string> invitedChannels;
 		int			registered;
 		int				sock;
 		Client();
@@ -25,9 +26,12 @@ class Client
 
 		std::string getFullname();
 
+		std::string getInvitedChannels();
+
 		void disconnect();
 		void leaveAllChannels();
-
+		void eraseInvitedChannel(std::string channelName);
+		void eraseChannel(std::string channelName);
 
 };
 

@@ -57,8 +57,14 @@
 
 #define ERR_UNKNOWNMODE(nick, hostname, channel, character) ":" + hostname + " 472 " + nick + " " + channel + " " + character + " :is unknown mode char to me\r\n"
 #define RPL_YOUREOPER(hostname, nick) ":" + hostname + " 381 " + nick + ":You are now an IRC operator\r\n"
-#define RPL_KICK(kicker, username, host, channel, targetuser, reason) ":" + kicker + "!" + username + "@" + host + " KICK " + channel + " " + targetuser + " :" + reason + "\r\n"
+#define RPL_KICK(kicker, username, host, channel, targetuser, reason) "\r\n:" + kicker + "!" + username + "@" + host + " KICK " + channel + " " + targetuser + " :" + reason + "\r\n"
 #define PRIVMSG_FORMAT(senderNick, senderUsername, senderHostname, receiver, message) ":" + senderNick + "!~" + senderUsername + "@" + senderHostname + " PRIVMSG " + receiver + " :" + message + "\r\n"
 #define ERR_UNKNOWNCOMMAND(nick, hostname, command) ":" + hostname + " 421 " + nick + " " + command + " :Unknown command\r\n"
 
 #define ERR_CHANOPRIVSNEEDED(nick, hostname, channel) ":" + hostname + " 482 " + nick + " " + channel + " :You're not channel operator\r\n"
+
+#define RPL_INVITELIST(nick, hostname, invitedChannel) ":" + hostname + " 346 " + nick + " " + invitedChannel + " :Invite list\r\n"
+#define RPL_ENDOFINVITELIST(nick, hostname) ":" + hostname + " 347 " + nick + " :End of invite list\r\n"
+#define RPL_NOTOPIC(nick, hostname, channel) ":" + hostname + " 331 " + nick + " " + channel + " :No topic is set\r\n"
+
+#define ERR_CANNOTSENDTOCHAN(nick, channel, hostname) ":" + hostname + " 404 " + nick + " " + channel + " :Cannot send to channel\r\n"

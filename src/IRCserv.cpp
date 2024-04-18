@@ -16,6 +16,16 @@ IRCserv::IRCserv(std::string port, std::string password)
 	init();
 }
 
+Client	*IRCserv::isClientExisiting(std::string name)
+{
+	for (std::map<int, Client>::iterator it = clients.begin(); it != clients.end(); it++)
+	{
+		if (it->second.nick == name)
+			return &it->second;
+	}
+	return NULL;
+}
+
 void	IRCserv::init()
 {
 	struct sockaddr_in addr;
@@ -104,96 +114,121 @@ std::string getFirstWord(std::string str)
 	return temp;
 }
 
+bool	IRCserv::isValidNick(std::string nick)
+{
+	printf("Nick: |%s|\n", nick.c_str());
+	for (size_t i = 0; i < nick.length(); i++)
+	{
+		if (isspace(nick[i]))
+			return false;
+	}
+	if (nick[0] == ':' || nick[0] == '#')
+		return false;
+	return true;
+}
+
+std::string IRCserv::removeTail(std::string buff)
+{
+	while (buff[buff.length() - 1] == '\n' || buff[buff.length() - 1] == '\r')
+		buff = buff.substr(0, buff.length() - 1);
+	
+	return buff;
+}
+
 void	IRCserv::registeredAction(Client &client, std::string &buff)
 {
+	printf("Registered: %d, buff: |%s|\n", client.registered, buff.c_str());
 	std::string temp = ParseBuffToRegister(buff);
 	if (client.registered == 0)
 	{
-		size_t pos = temp.find("PASS");
-		if (pos != std::string::npos && pos == 0)
+		std::string nickTemp;
+		size_t pos = temp.find("NICK");
+		if (pos != std::string::npos)
 		{
-			if (temp.length() < 6 || !isspace(temp[4]))
+			nickTemp = temp.substr(pos);
+			temp = removeTail(temp.substr(0, pos));
+		}
+		if (getFirstWord(temp) == "PASS")
+		{
+			std::string pass = temp.substr(5);
+			if (pass == this->password)
 			{
-				client.send_message(ERR_PASSWDMISMATCH(client.nick, this->getHostName()));
+				client.registered = 1;
+				if (nickTemp.length())
+					registeredAction(client, nickTemp);
+			}
+			else
+			{
+				client.send_message(ERR_PASSWDMISMATCH(std::string("unknown"), this->getHostName()));
 				return;
 			}
-			std::string pass = temp.substr(pos + 5);
-			if (pass == password)
-				client.registered = 1;
-			else
-				client.send_message(ERR_PASSWDMISMATCH(client.nick, this->getHostName()));
 		}
 		else
-			client.send_message(ERR_PASSWDMISMATCH(client.nick, this->getHostName()));
+			return;
 	}
-	else if (client.registered == 1)
+	if (client.registered == 1)
 	{
-		size_t pos = temp.find("NICK");
-		if (pos != std::string::npos && pos == 0)
+		std::string userTemp;
+		// search for `USER` to check if `USER` appended to the end of the buffer
+		size_t pos = temp.find("USER");
+		if (pos != std::string::npos)
 		{
-			bool useLabel = false;
-			if (temp.find("\nUSER") != std::string::npos)
-				useLabel = true;
-			if (useLabel)
+			userTemp = temp.substr(pos);
+			temp = removeTail(temp.substr(0, pos));
+		}
+		if (getFirstWord(temp) == "NICK")
+		{
+			std::string nick = temp.substr(5);
+			if (nick.empty())
 			{
-				temp = temp.substr(temp.find("USER"));
-				buff.erase(buff.find("\nUSER"));
-			}
-			if (temp.length() < 6 || !isspace(temp[4]) || countWords(temp) != 2)
-			{
-				client.send_message(ERR_NONICKNAMEGIVEN(client.nick, this->getHostName()));
+				client.send_message(ERR_NONICKNAMEGIVEN(std::string("unknown"), this->getHostName()));
 				return;
 			}
-
-			std::string nick = temp.substr(pos + 5);
-			if (nick.find(' ') != std::string::npos)
+			if (!isValidNick(nick))
 			{
-				client.send_message(ERR_ERRONEUSNICKNAME(client.nick, this->getHostName()));
+				client.send_message(ERR_ERRONEUSNICKNAME(std::string("unknown"), this->getHostName()));
 				return;
 			}
-			for (std::map<int, Client>::iterator it = clients.begin(); it != clients.end(); it++)
+			if (isClientExisiting(nick))
 			{
-				if (it->second.nick == nick)
-				{
-					client.send_message(ERR_NICKNAMEINUSE(client.nick, this->getHostName()));
-					return;
-				}
+				client.send_message(ERR_NICKNAMEINUSE(std::string("unknown"), this->getHostName()));
+				return;
 			}
 			client.nick = nick;
 			client.registered = 2;
-			if (useLabel)
-				goto label;
+			if (userTemp.length())
+				registeredAction(client, userTemp);		
 		}
 		else
-			client.send_message(ERR_NONICKNAMEGIVEN(client.nick, this->getHostName()));
+			return;
 	}
-	else if (client.registered == 2)
+	if (client.registered == 2)
 	{
-		label:
-		size_t pos = temp.find("USER");
-		if (pos != std::string::npos && pos == 0)
+		if (getFirstWord(temp) == "USER")
 		{
-			if (temp.length() < 6 || !isspace(temp[4]) || countWords(temp) != 5)
+			char *user = strtok((char *)temp.c_str(), " ");
+			char *mode = strtok(NULL, " ");
+			char *unused = strtok(NULL, " ");
+			char *realname = strtok(NULL, "");
+			if (!realname)
 			{
 				client.send_message(ERR_NEEDMOREPARAMS(client.nick, this->getHostName()));
 				return;
 			}
-			std::string user = getFirstWord(temp.substr(pos + 5));
-			std::string mode = getFirstWord(temp.substr(temp.find(user) + user.length()));
-			std::string realname = temp.substr(temp.find(mode) + mode.length());
-			if (realname[0] == ':')
-				realname = realname.substr(1);
 			client.user = user;
 			client.mode = mode;
+			client.hostname = unused;
 			client.realname = realname;
-			client.registered = 3;			
-
-
+			client.registered = 3;
 			client.send_message(RPL_WELCOME(client.nick, this->getHostName()));
+			client.send_message(RPL_YOURHOST(client.nick, this->getHostName()));
+			client.send_message(RPL_CREATED(client.nick, this->getHostName()));
+			client.send_message(RPL_MYINFO(client.nick, this->getHostName()));
 		}
 		else
-			client.send_message(ERR_NEEDMOREPARAMS(client.nick, this->getHostName()));
+			return;
 	}
+
 }
 
 
@@ -233,10 +268,8 @@ void	IRCserv::loop()
 				{
 					buff[len] = 0;
 					// remove tailing of limechat client and nc client
-					if (buff[len - 1] == '\n')
-						buff[len - 1] = 0;
-					if (buff[len - 2] == '\r')
-						buff[len - 2] = 0;
+					strcpy(buff, removeTail(buff).c_str());
+
 					std::string temp = buff;
 					int tempStatus = clients[fds[i].fd].registered;
 					if (clients[fds[i].fd].registered < 3)
@@ -249,7 +282,7 @@ void	IRCserv::loop()
 					else if (tempStatus == 3)
 					{
 						// here we can add application logic
-						std::cout << "Received: " << buff << std::endl;
+						std::cout << "Received by `" << clients[fds[i].fd].nick << "`: " << buff << std::endl;
 						handle_message(buff, clients[fds[i].fd]);
 					}
 				}
@@ -259,7 +292,7 @@ void	IRCserv::loop()
 }
 
 
-void IRCserv::handle_message(char *msg, Client client)
+void IRCserv::handle_message(char *msg, Client &client)
 {
 	char *cmd;
 	char *tmp = strdup(msg);
@@ -272,21 +305,128 @@ void IRCserv::handle_message(char *msg, Client client)
 	else if (!strcmp("NICK", cmd))
 	{
 		char *nick = strtok(NULL, " ");
-		if (nick)
+		if (nick && !isClientExisiting(nick))
 			client.nick = std::string(nick);
 	}
 	else if (!strcmp("PRIVMSG", cmd))
-	{
 		this->parsePRIVMSG(msg, client);
-	}
 	else if (!strcmp("MODE" , cmd))
 		this->handleMode(msg, client);
 	else if (!strcmp("INVITE", cmd))
 		this->handleInvite(msg, client);
+	else if (!strcmp("KICK", cmd))
+		this->handleKick(msg, client);
+	else if (!strcmp("TOPIC", cmd))
+		this->handleTopic(msg, client);
+	else if (!strcmp("BOT", cmd))
+	{
+	}
+}
+
+void IRCserv::handleTopic(char *msg, Client &client)
+{
+	char *part = strtok(msg, " ");
+	if (strcmp("TOPIC", part))
+		return;
+	char *channel = strtok(NULL, " ");
+	char *topic = strtok(NULL, "");
+	if (topic && topic[0] == ':')
+		topic++;
+	else if (topic && topic[0] != ':')
+		topic = strtok(topic, " ");
+	if (!channel)
+	{
+		client.send_message(ERR_NEEDMOREPARAMS(client.nick, this->getHostName()));
+		return;
+	}
+	Channel *ch = isChannelExisiting(channel);
+	if (!ch)
+	{
+		client.send_message(ERR_NOSUCHCHANNEL(client.nick, this->getHostName(), channel));
+		return;
+	}
+	if (!ch->isClientOnChannel(client))
+	{
+		client.send_message(ERR_NOTONCHANNEL(this->getHostName(), channel));
+		return;
+	}
+	if (!topic)
+	{
+		if (ch->isTopicSet)
+			client.send_message(RPL_TOPIC(client.nick, this->getHostName(), channel, ch->getTopicNickSetter(), ch->getTopic()));
+		else
+			client.send_message(RPL_NOTOPIC(client.nick, this->getHostName(), channel));
+	}
 	else
 	{
-		std::cout << "Unknown command: " << cmd << std::endl;
+		if (!strlen(topic) && ch->isTopicSet && ch->isFdOperator(client.sock))
+		{
+			ch->setTopic("");
+			client.send_message(RPL_TOPIC(this->getHostName(), client.nick, channel, ch->getTopicNickSetter(), ""));
+		}
+		else if (strlen(topic) && ch->isFdOperator(client.sock))
+		{
+			ch->setTopic(topic);
+			client.send_message(RPL_TOPIC(client.nick, this->getHostName(), channel, ch->getTopicNickSetter(),ch->getTopic()));
+		}
+		else
+			client.send_message(ERR_CHANOPRIVSNEEDED(client.nick, this->getHostName(), channel));
 	}
+}
+
+void IRCserv::handleKick(char *msg, Client &client)
+{
+	char *part = strtok(msg, " ");
+	if (strcmp("KICK", part))
+		return;
+	char *channel = strtok(NULL, " ");
+	char *nick = strtok(NULL, " ");
+	char *reason = strtok(NULL, "");
+	if (!channel || !nick)
+	{
+		client.send_message(ERR_NEEDMOREPARAMS(client.nick, this->getHostName()));
+		return;
+	}
+	Channel *ch = isChannelExisiting(channel);
+	if (!ch)
+	{
+		client.send_message(ERR_NOSUCHCHANNEL(client.nick, this->getHostName(), channel));
+		return;
+	}
+	if (!ch->isClientOnChannel(client))
+	{
+		client.send_message(ERR_NOTONCHANNEL(this->getHostName(), channel));
+		return;
+	}
+	if (!ch->isNickInChannel(nick))
+	{
+		client.send_message(ERR_USERNOTINCHANNEL(this->getHostName(), channel));
+		return;
+	}
+	if (!ch->isFdOperator(client.sock))
+	{
+		client.send_message(ERR_NOTOP(this->getHostName(), channel));
+		return;
+	}
+
+	Client *kicked = NULL;
+	for (std::map<int, Client>::iterator it = clients.begin(); it != clients.end(); it++)
+	{
+		if (it->second.nick == nick)
+		{
+			kicked = &it->second;
+			break;
+		}
+	}
+	if (!kicked)
+	{
+		client.send_message(ERR_NOSUCHNICK(this->getHostName(), channel, nick));
+		return;
+	}
+	// send reply to kick client from channel
+	kicked->send_message(RPL_KICK(client.nick, client.user, this->getHostName(), channel, kicked->nick, reason));
+	kicked->eraseChannel(ch->getName());
+	ch->eraseClient(*kicked);
 }
 
 void	IRCserv::handleInvite(char *msg, Client &client)
@@ -297,6 +437,12 @@ void	IRCserv::handleInvite(char *msg, Client &client)
 		return;
 	char *nick = strtok(NULL, " ");
 	char *channel = strtok(NULL, " ");
+	if ((!nick || !strcmp(nick, ":"))&& !channel)
+	{
+		client.send_message(RPL_INVITELIST(client.nick, this->getHostName(), client.getInvitedChannels()));
+		client.send_message(RPL_ENDOFINVITELIST(client.nick, this->getHostName()));
+		return;
+	}
 	if (!nick || !channel)
 	{
 		client.send_message(ERR_NEEDMOREPARAMS(client.nick, this->getHostName()));
@@ -337,10 +483,30 @@ void	IRCserv::handleInvite(char *msg, Client &client)
 		client.send_message(ERR_NOSUCHNICK(client.nick, this->getHostName(), nick));
 		return;
 	}
-	ch->addInvited(*invited);
-	invited->send_message(RPL_INVITING(client.nick, this->getHostName(), nick, channel));
+
+	inviteClinetToChannel(*invited, *ch, client);
 }
 
+void IRCserv::inviteClinetToChannel(Client &invitedClient, Channel &channel, Client &client)
+{
+	// invitedClient.invitedChannels.push_back(channel.getName());
+	// check if client is already invited
+	std::vector<std::string>::iterator it = std::find(invitedClient.invitedChannels.begin(), invitedClient.invitedChannels.end(), channel.getName());
+	if (it == invitedClient.invitedChannels.end())
+		invitedClient.invitedChannels.push_back(channel.getName());
+	bool isAreadyInvited = false;
+	for (size_t i = 0; i < channel.clientsInvited.size(); i++)
+	{
+		if (channel.clientsInvited[i].nick == invitedClient.nick)
+		{
+			isAreadyInvited = true;
+			break;
+		}
+	}
+	if (!isAreadyInvited)
+		channel.clientsInvited.push_back(invitedClient);
+	invitedClient.send_message(RPL_INVITING(client.nick, this->getHostName(), invitedClient.nick, channel.getName()));
+}
 
 void IRCserv::parseChannelMessage(char *msg, Client &client)
 {

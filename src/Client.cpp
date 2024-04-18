@@ -24,6 +24,31 @@ void Client::send_message(std::string msg)
 	write(this->sock, msg.c_str(), msg.length());
 }
 
+void Client::eraseInvitedChannel(std::string channelName)
+{
+	std::vector<std::string>::iterator it;
+	for (it = this->invitedChannels.begin(); it < this->invitedChannels.end(); it++)
+	{
+		if (*it == channelName)
+		{
+			this->invitedChannels.erase(it);
+			return;
+		}
+	}
+}
+
+std::string	Client::getInvitedChannels()
+{
+	std::string str;
+	for (size_t i = 0; i < this->invitedChannels.size(); i++)
+	{
+		str += this->invitedChannels[i];
+		if (i != this->invitedChannels.size() - 1)
+			str += ", ";
+	}
+	return str;
+}
+
 void Client::leaveAllChannels()
 {
 	// std::vector<Channel>::iterator it;
@@ -72,3 +97,16 @@ const std::string ClientErrMsgException::getMessage() const
 	return this->_cmessage;
 }
 
+
+void Client::eraseChannel(std::string channelName)
+{
+	std::vector<Channel *>::iterator it;
+	for (it = this->_channels.begin(); it < this->_channels.end(); it++)
+	{
+		if ((*it)->getName() == channelName)
+		{
+			this->_channels.erase(it);
+			return;
+		}
+	}
+}

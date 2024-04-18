@@ -10,6 +10,19 @@ Channel::~Channel()
 
 }
 
+void Channel::eraseClient(Client &client)
+{
+    std::vector<Client>::iterator it;
+    for (it = this->clients.begin(); it < this->clients.end(); it++)
+    {
+        if (it->nick == client.nick)
+        {
+            this->clients.erase(it);
+            return;
+        }
+    }
+}
+
 Channel::Channel(std::string name, char *pass, Client &client, std::string srv_hst)
 {
     if (!this->_isChannelNameValid(name))
@@ -124,7 +137,7 @@ std::string Channel::getListClients()
     return str;
 }
 
-bool Channel::isClientOnChannel(Client &client)
+bool Channel::isClientOnChannel(Client client)
 {
     std::vector<Client>::iterator it;
 
@@ -143,9 +156,34 @@ bool Channel::addClient(Client &client, char *pass)
             throw ClientErrMsgException(ERR_BADCHANNELKEY(client.nick, this->srv_hostname, this->name), client);
 
     this->clients.push_back(client);
+
+
+    // check if client invited to channel and remove from invited list
+    // if (std::find(this->clientsInvited.begin(), this->clientsInvited.end(), client) != this->clientsInvited.end())
+    printf("\t\tClient %s is invited to channel %s\n", client.nick.c_str(), this->name.c_str());
+
+    eraseInvitedClient(client);
+
+    client.eraseInvitedChannel(this->name);
+    
     client._channels.push_back(this);
     return true;
 }
+
+void Channel::eraseInvitedClient(Client &client)
+{
+    std::vector<Client>::iterator it;
+    for (it = this->clientsInvited.begin(); it < this->clientsInvited.end(); it++)
+    {
+        if (it->nick == client.nick)
+        {
+            this->clientsInvited.erase(it);
+            return;
+        }
+    }
+}
+
+
 
 void Channel::send_message(Client &client, std::string msg)
 {
@@ -194,7 +232,7 @@ void IRCserv::addNewChannel(std::string name,char *pass, Client &client)
 bool Channel::is_member(Client &client)
 {
     std::vector<Client>::iterator it;
-    for (it = this->clients.begin(); it < this->clients.end(); it++)
+    for (it = this->clients.begin(); it != this->clients.end(); it++)
     {
         if (client.nick == it->nick)
             return true;

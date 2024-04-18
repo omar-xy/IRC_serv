@@ -32,7 +32,7 @@ class IRCserv {
 
 		std::vector<Channel*> channels;
 
-		void handle_message(char *msg, Client client);
+		void handle_message(char *msg, Client &client);
         void parseChannelMessage(char *msg, Client &client);
 		void parsePartMessage(char *msg, Client &client);
 		void parsePRIVMSG(char *msg, Client &client);
@@ -41,12 +41,22 @@ class IRCserv {
 		// --- INVITE ---
 		void handleInvite(char *msg, Client &client);
 
+		// --- KICK ---
+		void handleKick(char *msg, Client &client);
+
+		// --- TOPIC ---
+		void handleTopic(char *msg, Client &client);
+
 		void applyModeFlags(std::string channelName, std::string modeFlags, std::string additionalParams, Client &client);
 		std::string extractKeyFromParams(std::string &additionalParams);
 		std::string extractNicknameFromParams(std::string &additionalParams);
 		Channel *isChannelExisiting(std::string name);
 		void addNewChannel(std::string name, char *pass, Client &client);
 		std::string getHostName();
+		void	inviteClinetToChannel(Client &invitedClient, Channel &channel, Client &client);
+		Client *isClientExisiting(std::string name);
+		bool isValidNick(std::string nick);
+		std::string removeTail(std::string buff);
 
 
 	public:

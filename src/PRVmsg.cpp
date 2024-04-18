@@ -3,63 +3,53 @@
 
 
 void IRCserv::parsePRIVMSG(char *msg, Client &client)
-{
-char *tmp;
-(void) client;
-tmp = strtok(msg, " ");
-if (strcmp("PRIVMSG", tmp))
-    return;
-char *target = strtok(NULL, " ");
-if (!target)
-{
-    client.send_message(":" + this->getHostName() + " 411 " + client.nick + " :No recipient given\r\n");
-    return;
-}
-char *message = strtok(NULL, "\0");
-if (!message)
-{
-    client.send_message(":" + this->getHostName() + " 412 " + client.nick + " :No text to send\r\n");
-    return;
-}
-std::string tg(target);
-trim(tg);
-bool recipientFound = false;
-for (std::map<int, Client>::iterator it = clients.begin(); it != clients.end(); ++it)
-{
-    if (it->second.nick == tg)
+{  
+    char *prefix = strtok(msg, " ");
+    char *target = strtok(NULL, " ");
+    char *text = strtok(NULL, "");
+    if  (!prefix || strcmp(prefix, "PRIVMSG"))
+        return ;
+    if (text && text[0] == ':')
     {
-        std::string temp(message);
-        trim(temp);
-		std::string msg_sent = client.nick + ": "+ temp + "\r\n";
-        it->second.send_message(msg_sent.c_str());
-        recipientFound = true;
-        break;
+        printf("--PRIVMSG: %s -> %s: %s\n", client.nick.c_str(), target, text + 1);
+        printf("|%s|\n", text + 1);
+        text++;
     }
-}
-
-if (!recipientFound) {
-    for (std::vector<Channel*>::iterator it = channels.begin(); it != channels.end(); ++it) {
-        if ((*it)->getName() == target) 
+    if (!target || !text)
+    {
+        client.send_message(ERR_NEEDMOREPARAMS(client.nick, this->getHostName()));
+        return ;
+    }
+    if (target[0] == '#')
+    {
+        Channel *ch = isChannelExisiting(target);
+        if (ch)
         {
-            std::string temp_ch = message;
-            trim(temp_ch);
-		    std::string msg_sent_ch = client.nick + ": "+ temp_ch + "\r\n";
-            if ((*it)->is_member(client)) 
-                (*it)->send_message(client, msg_sent_ch.c_str());
+            if (ch->is_member(client))
+            {
+                ch->send_message(client, text);
+            }
             else
-                client.send_message(":" + this->getHostName() + " 404 " + client.nick + " " + (*it)->getName() + " :Cannot send to channel\r\n");
-            recipientFound = true;
-            break;
+            {
+                client.send_message(ERR_CANNOTSENDTOCHAN(client.nick, target, this->getHostName()));
+            }
+        }
+        else
+        {
+            client.send_message(ERR_NOSUCHCHANNEL(this->getHostName(), target, client.nick));
         }
     }
-}
-if (!recipientFound)
-    client.send_message(":" + this->getHostName() + " 401 " + client.nick + " " + target + " :No such nick/channel\r\n");
-if (target && message)
-{
-    std::cout << "target : " << target << std::endl;
-    std::cout << "message : " << message << std::endl;
-
-}
-	
+    else
+    {
+        Client *receiver = isClientExisiting(target);
+        if (receiver)
+        {
+            printf("PRIVMSG: %s -> %s: %s\n", client.nick.c_str(), receiver->nick.c_str(), text);
+            receiver->send_message(PRIVMSG_FORMAT(client.nick, client.user, client.hostname, target, text));
+        }
+        else
+        {
+            client.send_message(ERR_NOSUCHNICK(this->getHostName(), target, client.nick));
+        }
+    }
 }

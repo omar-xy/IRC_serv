@@ -15,9 +15,7 @@ class Channel{
         std::string op;
         std::vector<int> fdOps;
         std::vector<Client> clients;
-        std::vector<Client> clientsInvited;
 
-        bool        isTopicSet;
         std::string topic;
         std::string topic_usersetter;
         std::string topic_nicksetter;
@@ -30,6 +28,8 @@ class Channel{
         bool _isChannelNameValid(std::string name);
 
     public:
+        bool        isTopicSet;
+        std::vector<Client> clientsInvited;
         bool isFdOperator(int fd);
         std::string getName();
         std::string getTopicUserSetter();
@@ -39,7 +39,11 @@ class Channel{
         std::vector<Client> getClients();
         std::string getListClients();
 
-        bool isClientOnChannel(Client &client);
+        void eraseInvitedClient(Client &client);
+
+        void eraseClient(Client &client);
+
+        bool isClientOnChannel(Client client);
         bool isInviteOnly();
         bool isNickInChannel(std::string nickname);
 

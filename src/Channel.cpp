@@ -60,17 +60,6 @@ std::vector<Client> Channel::getClients()
     return (this->clients);
 }
 
-// Client &Channel::getAclient(std::string nickname)
-// {
-//     std::vector<Client>::iterator it;
-//     for (it = this->clients.begin(); it < this->clients.end(); it++)
-//     {
-//         if (nickname == it->nick)
-//         {
-//             return (*it);
-//         }
-//     }
-// }
 
 std::string Channel::getName()
 {
@@ -81,10 +70,7 @@ std::string Channel::getTopicUserSetter()
 {
     return this->topic_usersetter;
 }
-std::string Channel::getTopicNickSetter()
-{
-    return this->topic_nicksetter;
-}
+ 
 std::string Channel::getTopic()
 {
     return this->topic;
@@ -173,8 +159,6 @@ bool Channel::addClient(Client &client, char *pass)
 
     // check if client invited to channel and remove from invited list
     // if (std::find(this->clientsInvited.begin(), this->clientsInvited.end(), client) != this->clientsInvited.end())
-    printf("\t\tClient %s is invited to channel %s\n", client.nick.c_str(), this->name.c_str());
-
     eraseInvitedClient(client);
 
     client.eraseInvitedChannel(this->name);
@@ -253,42 +237,28 @@ bool Channel::is_member(Client &client)
     return false;
 }
 
-void Channel::setInviteOnly(bool value)
-{
-    isInviteOnlySet = value;
-}
-
-void Channel::setKey(const std::string& newKey)
-{
-    key = newKey;
-    isPasswordSet = true;
-}
-void Channel::setTopic(const std::string& newTopic) 
-{
-    topic = newTopic;
-    isTopicSet = true;
-}
-void Channel::setUserLimit(int limit) 
-{
-    userLimit = limit;
-}
-
-void Channel::setTopicRestrictions(bool value)
-{
-    this->isTopicSet = true;
-}
-
-void Channel::setOperator(Client &client, bool isOperator)
-{
-    this->fdOps.push_back(client.sock);
-    this->_isOperator = true;
-}
 
 void Channel::addOperator(const std::string& nickname)
 {
-    // bool set = this->isClientOnChannel(*isClientExisiting(nickname));
-    // if (set)
-    //     this->
+    this->op = nickname;
+    if (isNickInChannel(nickname) == true)
+    {
+        std::vector<Client>::iterator it;
+        for (it = this->clients.begin(); it < this->clients.end(); it++)
+        {
+            if (it->nick == nickname)
+            {
+                this->fdOps.push_back(it->sock);
+                this->_isOperator = true;
+                return;
+            }
+        }
+    }
+    else
+    {
+        client.send_message(ERR_USERNOTINCHANNEL(client.nick, this->getHostName(), nickname, this->name));
+        this->_isOperator = false;
+    }
 }
 
 
@@ -298,6 +268,62 @@ bool Channel::isInviteOnly()
     return isInviteOnlySet;
 }
 
+void Channel::setTopic(const std::string& newTopic) 
+{
+    topic = newTopic;
+    isTopicSet = true;
+}
+void setInviteOnly(Channel* channel, bool setFlag, const std::string& additionalParams, Client& client)
+{
+    this->isInviteOnlySet = value;
+}
+
+void setKey(Channel* channel, bool setFlag, const std::string& additionalParams, Client& client)
+{
+     if (setFlag)
+    {
+    
+        if (additionalParams.empty())
+            client.send_message(ERR_NEEDMOREPARAMS(client.nick, this->getHostName()));
+        else
+        {
+            this->key = additionalParams;
+            this->isPasswordSet = true;
+        }
+    }
+    else
+        this->isPasswordSet = false;
+}
+void setUserLimit(Channel* channel, bool setFlag, const std::string& additionalParams, Client& client)
+{
+    if (setFlag)
+    {
+        if (additionalParams.empty())
+            client.send_message(ERR_NEEDMOREPARAMS(client.nick, this->getHostName()));
+        else
+        {
+            limit = atoi(additionalParams.c_str());
+            if (limit)
+                this->userLimit = limit;
+            else
+                this->userLimit = 0;
+        }
+    }
+    else
+        this->userLimit = 0;
+}
+
+void setTopicRestrictions(Channel* channel, bool setFlag, const std::string& additionalParams, Client& client)
+{
+    this->topic = additionalParams;
+    this->isTopicSet = true;
+}
+
+void setOperator(Channel* channel, bool setFlag, const std::string& additionalParams, Client& client)
+{
+    this->addOperator(client.nick);
+    this->_isOperator = true;
+}
 bool Channel::isNickInChannel(std::string nickname)
 {
     std::vector<Client>::iterator it;
@@ -307,4 +333,19 @@ bool Channel::isNickInChannel(std::string nickname)
             return true;
     }
     return false;
+}
+
+std::string Channel::getKey()
+{
+    return key;
+}
+
+std::string Channel::getMode()
+{
+    return mode;
+}
+
+void Channel::setMode(const std::string& newMode)
+{
+    mode = newMode;
 }

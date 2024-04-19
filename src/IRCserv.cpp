@@ -1,5 +1,6 @@
 #include "../headers/IRCserv.hpp"
 #include "../headers/replies.hpp"
+#include <algorithm>
 
 IRCserv::IRCserv(std::string port, std::string password)
 {

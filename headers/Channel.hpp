@@ -5,7 +5,7 @@
 class Client;
 
 class Channel{
-    private:
+   
 
         std::string srv_hostname;
         std::string name;
@@ -24,7 +24,7 @@ class Channel{
         int topic_set_timestamp;
         std::string key;
         int userLimit;
-        
+        std::string mode;
 
         bool _isChannelNameValid(std::string name);
 
@@ -37,6 +37,8 @@ class Channel{
         std::string getTopicNickSetter();
         std::string getTopicTimestamp();
         std::string getTopic();
+        std::string getKey();
+        std::string getMode();
         std::vector<Client> getClients();
         std::string getListClients();
 
@@ -54,6 +56,7 @@ class Channel{
         bool is_member(Client &c);
         void setInviteOnly(bool value);
         void setKey(const std::string& newKey);
+        void setMode(const std::string& newMode);
         void setTopic(const std::string& newTopic);
         void setUserLimit(int limit);
         void setTopicRestrictions(bool value);
@@ -61,6 +64,7 @@ class Channel{
         void addOperator(const std::string& nickname);
 
         void addInvited(Client &client);
+        // Client& getClientByNick(std::string nickname);
 
         // static void parseChannelMessage(char *msg, Client client);
 

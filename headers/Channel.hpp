@@ -1,6 +1,7 @@
 #pragma once
 
 #include "header.hpp"
+#include <cstdlib>
 
 class Client;
 
@@ -10,9 +11,6 @@ class Channel{
         std::string srv_hostname;
         std::string name;
         std::string pass;
-        bool        isPasswordSet;
-        bool        isInviteOnlySet;
-        bool        _isOperator;
         std::string op;
         std::vector<int> fdOps;
         std::vector<Client> clients;
@@ -29,12 +27,15 @@ class Channel{
         bool _isChannelNameValid(std::string name);
 
     public:
+        bool        isPasswordSet;
+        bool        isInviteOnlySet;
+        bool        _isOperator;
         bool        isTopicSet;
         std::vector<Client> clientsInvited;
         bool isFdOperator(int fd);
         std::string getName();
-        std::string getTopicUserSetter();
         std::string getTopicNickSetter();
+        std::string getTopicUserSetter();
         std::string getTopicTimestamp();
         std::string getTopic();
         std::string getKey();
@@ -49,19 +50,27 @@ class Channel{
         bool isClientOnChannel(Client client);
         bool isInviteOnly();
         bool isNickInChannel(std::string nickname);
+        bool isKeySet();
+        bool isUserLimitSet();
+        bool isTopicRestrictionsSet();
+        bool isOperator(std::string nickname);
+        bool isModeSet(std::string mode);
+
+
 
         void setName(std::string name);
+        void setTopic(std::string topic);
         bool addClient(Client &c, char *pass);
         void send_message(Client &c, std::string message);
         bool is_member(Client &c);
-        void setInviteOnly(bool value);
-        void setKey(const std::string& newKey);
         void setMode(const std::string& newMode);
-        void setTopic(const std::string& newTopic);
+        void setInviteOnly(bool setFlag);
+        void setKey(std::string key);
         void setUserLimit(int limit);
-        void setTopicRestrictions(bool value);
-        void setOperator(Client &client, bool isOperator);
-        void addOperator(const std::string& nickname);
+        void setTopicRestrictions(bool setFlag);
+        void setOperator(bool setFlag);
+
+        void addOperator(const std::string& nickname, std::string hostname, Client &client);
 
         void addInvited(Client &client);
         // Client& getClientByNick(std::string nickname);

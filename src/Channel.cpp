@@ -1,5 +1,6 @@
 #include "../headers/Channel.hpp"
 
+
 // Channel::Channel()
 // {
 
@@ -66,10 +67,6 @@ std::string Channel::getName()
     return name;
 }
 
-std::string Channel::getTopicUserSetter()
-{
-    return this->topic_usersetter;
-}
  
 std::string Channel::getTopic()
 {
@@ -226,6 +223,16 @@ void IRCserv::addNewChannel(std::string name,char *pass, Client &client)
     }
 }
 
+std::string Channel::getTopicNickSetter()
+{
+    return this->topic_nicksetter;
+}
+
+std::string Channel::getTopicUserSetter()
+{
+    return this->topic_usersetter;
+}
+
 bool Channel::is_member(Client &client)
 {
     std::vector<Client>::iterator it;
@@ -238,7 +245,9 @@ bool Channel::is_member(Client &client)
 }
 
 
-void Channel::addOperator(const std::string& nickname)
+// setters and adds funcs,,
+
+void Channel::addOperator(const std::string& nickname, std::string hostName, Client &client)
 {
     this->op = nickname;
     if (isNickInChannel(nickname) == true)
@@ -252,78 +261,55 @@ void Channel::addOperator(const std::string& nickname)
                 this->_isOperator = true;
                 return;
             }
+            if (it == this->clients.end())
+            {
+                this->_isOperator = false;
+                client.send_message(ERR_USERNOTINCHANNEL(hostName,  this->getName()));
+            }
         }
     }
-    else
-    {
-        client.send_message(ERR_USERNOTINCHANNEL(client.nick, this->getHostName(), nickname, this->name));
-        this->_isOperator = false;
-    }
 }
 
 
-
-bool Channel::isInviteOnly()
-{
-    return isInviteOnlySet;
-}
-
-void Channel::setTopic(const std::string& newTopic) 
+void Channel::setTopic(std::string newTopic)
 {
     topic = newTopic;
-    isTopicSet = true;
-}
-void setInviteOnly(Channel* channel, bool setFlag, const std::string& additionalParams, Client& client)
-{
-    this->isInviteOnlySet = value;
 }
 
-void setKey(Channel* channel, bool setFlag, const std::string& additionalParams, Client& client)
+void Channel::setInviteOnly(bool setFlag)
 {
-     if (setFlag)
-    {
-    
-        if (additionalParams.empty())
-            client.send_message(ERR_NEEDMOREPARAMS(client.nick, this->getHostName()));
-        else
-        {
-            this->key = additionalParams;
-            this->isPasswordSet = true;
-        }
-    }
-    else
-        this->isPasswordSet = false;
-}
-void setUserLimit(Channel* channel, bool setFlag, const std::string& additionalParams, Client& client)
-{
-    if (setFlag)
-    {
-        if (additionalParams.empty())
-            client.send_message(ERR_NEEDMOREPARAMS(client.nick, this->getHostName()));
-        else
-        {
-            limit = atoi(additionalParams.c_str());
-            if (limit)
-                this->userLimit = limit;
-            else
-                this->userLimit = 0;
-        }
-    }
-    else
-        this->userLimit = 0;
+    isInviteOnlySet = setFlag;
 }
 
-void setTopicRestrictions(Channel* channel, bool setFlag, const std::string& additionalParams, Client& client)
+void Channel::setKey(std::string newKey)
 {
-    this->topic = additionalParams;
-    this->isTopicSet = true;
+    key = newKey;
 }
 
-void setOperator(Channel* channel, bool setFlag, const std::string& additionalParams, Client& client)
+
+void Channel::setUserLimit(int newLimit)
 {
-    this->addOperator(client.nick);
-    this->_isOperator = true;
+    userLimit = newLimit;
 }
+
+void Channel::setTopicRestrictions(bool setFlag)
+{
+    isTopicSet = setFlag;
+}
+
+void Channel::setOperator(bool setFlag)
+{
+    _isOperator = setFlag;
+}
+
+
+void Channel::setMode(const std::string& newMode)
+{
+    mode = newMode;
+}
+
+
+// gettters
 bool Channel::isNickInChannel(std::string nickname)
 {
     std::vector<Client>::iterator it;
@@ -345,7 +331,38 @@ std::string Channel::getMode()
     return mode;
 }
 
-void Channel::setMode(const std::string& newMode)
+
+
+// boolen functions to check if mode is set
+
+
+bool Channel::isKeySet()
 {
-    mode = newMode;
+    return isPasswordSet;
+}
+
+bool Channel::isUserLimitSet()
+{
+    return userLimit;
+}
+
+bool Channel::isTopicRestrictionsSet()
+{
+    return isTopicSet;
+}
+
+
+bool Channel::isOperator(std::string nickname)
+{
+    return _isOperator;
+}
+
+bool Channel::isInviteOnly()
+{
+    return isInviteOnlySet;
+}
+
+bool Channel::isModeSet(std::string mode)
+{
+    return mode == this->mode;
 }

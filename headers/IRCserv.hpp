@@ -11,6 +11,7 @@
 #include "Client.hpp"
 #include <sys/poll.h>
 #include <iterator>
+#include <cstdlib>
 
 std::vector<std::string> split(const std::string &s, char delimiter);
 

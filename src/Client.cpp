@@ -37,6 +37,20 @@ void Client::eraseInvitedChannel(std::string channelName)
 	}
 }
 
+
+void Client::eraseChannel(std::string channelName)
+{
+	std::vector<Channel *>::iterator it;
+	for (it = this->_channels.begin(); it < this->_channels.end(); it++)
+	{
+		if ((*it)->getName() == channelName)
+		{
+			this->_channels.erase(it);
+			return;
+		}
+	}
+}
+
 std::string	Client::getInvitedChannels()
 {
 	std::string str;
@@ -95,18 +109,4 @@ ClientErrMsgException::~ClientErrMsgException() throw()
 const std::string ClientErrMsgException::getMessage() const
 {
 	return this->_cmessage;
-}
-
-
-void Client::eraseChannel(std::string channelName)
-{
-	std::vector<Channel *>::iterator it;
-	for (it = this->_channels.begin(); it < this->_channels.end(); it++)
-	{
-		if ((*it)->getName() == channelName)
-		{
-			this->_channels.erase(it);
-			return;
-		}
-	}
 }

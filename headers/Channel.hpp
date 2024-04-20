@@ -45,6 +45,7 @@ class Channel{
         void eraseInvitedClient(Client &client);
 
         void eraseClient(Client &client);
+        void eraseChannel(std::string channelName);
         void eraseOp(int fd);
 
 
@@ -65,11 +66,12 @@ class Channel{
         
         
         bool addClient(Client &c, char *pass);
-        bool removeClient(Client &c, char *reason);
+        bool removeClient(Client &c);
         bool is_member(Client &c);
 
 
         void send_message(Client &c, std::string message);
+        void send_message(std::string message);
         
         void setMode(const std::string& newMode);
         void setInviteOnly(bool setFlag);

@@ -25,6 +25,16 @@ void Channel::eraseClient(Client &client)
     }
 }
 
+void Channel::eraseOp(int fd)
+{
+    std::vector<int>::iterator it;
+    for (it = this->fdOps.begin(); it < this->fdOps.end(); it++)
+    {
+        if (*it == fd)
+            this->fdOps.erase(it);
+    }
+}
+
 Channel::Channel(std::string name, char *pass, Client &client, std::string srv_hst)
 {
     if (!this->_isChannelNameValid(name))
@@ -209,6 +219,7 @@ void IRCserv::addNewChannel(std::string name,char *pass, Client &client)
     {
         channel = new Channel(name, pass,client, this->getHostName());
         this->channels.push_back(channel);
+        channel->setOperator(client, true);
         client.send_message(RPL_JOIN(client.nick, client.user, name, client.getIpAddress()));
         client.send_message(RPL_MODEIS(name, this->getHostName(), "+sn"));
         client.send_message(RPL_NAMREPLY(this->getHostName(), channel->getListClients(), channel->getName(), client.nick));
@@ -292,7 +303,6 @@ bool Channel::is_member(Client &client)
 
 void Channel::addOperator(const std::string& nickname, std::string hostName, Client &client)
 {
-    this->op = nickname;
     if (isNickInChannel(nickname) == true)
     {
         std::vector<Client>::iterator it;
@@ -301,16 +311,34 @@ void Channel::addOperator(const std::string& nickname, std::string hostName, Cli
             if (it->nick == nickname)
             {
                 this->fdOps.push_back(it->sock);
+                it->send_message(RPL_YOUREOPER(hostName, client.nick));
                 this->_isOperator = true;
                 return;
             }
-            if (it == this->clients.end())
+        }
+    }
+    else
+        client.send_message(ERR_USERNOTINCHANNEL(hostName,  this->getName()));
+}
+
+void Channel::removeOperator(const std::string& nickname, std::string hostName, Client &client)
+{
+    if (isNickInChannel(nickname) == true)
+    {
+        std::vector<Client>::iterator it;
+        for (it = this->clients.begin(); it < this->clients.end(); it++)
+        {
+            if (it->nick == nickname)
             {
+                eraseOp(it->sock);
+                it->send_message(ERR_CHANOPRIVSNEEDED(it->nick, hostName, this->getName()));
                 this->_isOperator = false;
-                client.send_message(ERR_USERNOTINCHANNEL(hostName,  this->getName()));
+                return;
             }
         }
     }
+    else
+        client.send_message(ERR_USERNOTINCHANNEL(hostName,  this->getName()));
 }
 
 
@@ -340,9 +368,9 @@ void Channel::setTopicRestrictions(bool setFlag)
     isTopicSet = setFlag;
 }
 
-void Channel::setOperator(bool setFlag)
+void Channel::setOperator(Client &client, bool setFlag)
 {
-    _isOperator = setFlag;
+    this->fdOps.push_back(client.sock);
 }
 
 
@@ -377,8 +405,6 @@ std::string Channel::getMode()
 
 
 // boolen functions to check if mode is set
-
-
 bool Channel::isKeySet()
 {
     return isPasswordSet;

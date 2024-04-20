@@ -8,6 +8,7 @@ class Client
 {
 	public:
 		std::string		nick;
+		int				sock;
 		std::string		user;
 		std::string		hostname;
 		std::string		realname;
@@ -15,7 +16,6 @@ class Client
 		std::vector<Channel *> _channels;
 		std::vector<std::string> invitedChannels;
 		int			registered;
-		int				sock;
 		Client();
 		~Client();
 		Client(int sock);
@@ -37,15 +37,16 @@ class Client
 
 class ClientErrMsgException : public std::exception
 {
-            private:
-                const std::string _cmessage;
-                ClientErrMsgException() throw();
-            public:
-                ClientErrMsgException(std::string msg, Client &bc) throw();
-                virtual ~ClientErrMsgException() throw();
-                Client &_client;
-				const std::string getMessage() const;
-                virtual const char* what() const throw(){
-                    return (_cmessage.c_str());
-                };
+    private:
+        const std::string _cmessage;
+        ClientErrMsgException() throw();
+    public:
+        ClientErrMsgException(std::string msg, Client &bc) throw();
+        virtual ~ClientErrMsgException() throw();
+        Client &_client;
+		const std::string getMessage() const;
+        virtual const char* what() const throw()
+		{
+            return (_cmessage.c_str());
+        };
 };

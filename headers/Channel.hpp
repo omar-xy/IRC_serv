@@ -32,7 +32,6 @@ class Channel{
         bool        _isOperator;
         bool        isTopicSet;
         std::vector<Client> clientsInvited;
-        bool isFdOperator(int fd);
         std::string getName();
         std::string getTopicNickSetter();
         std::string getTopicUserSetter();
@@ -46,7 +45,10 @@ class Channel{
         void eraseInvitedClient(Client &client);
 
         void eraseClient(Client &client);
+        void eraseOp(int fd);
 
+
+        bool isFdOperator(int fd);
         bool isClientOnChannel(Client client);
         bool isInviteOnly();
         bool isNickInChannel(std::string nickname);
@@ -68,9 +70,10 @@ class Channel{
         void setKey(std::string key);
         void setUserLimit(int limit);
         void setTopicRestrictions(bool setFlag);
-        void setOperator(bool setFlag);
+        void setOperator(Client &client, bool setFlag);
 
         void addOperator(const std::string& nickname, std::string hostname, Client &client);
+        void removeOperator(const std::string& nickname, std::string hostName, Client &client);
 
         void addInvited(Client &client);
         // Client& getClientByNick(std::string nickname);

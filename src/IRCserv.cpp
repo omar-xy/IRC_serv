@@ -1,5 +1,6 @@
 #include "../headers/IRCserv.hpp"
 #include "../headers/replies.hpp"
+#include "../headers/replies.hpp"
 #include <algorithm>
 
 IRCserv::IRCserv(std::string port, std::string password)
@@ -301,6 +302,8 @@ void IRCserv::handle_message(char *msg, Client &client)
 
     if (!strcmp("JOIN", cmd))
         this->parseChannelMessage(msg, client);
+	else if (!strcmp("PART", cmd))
+        this->parsePartMessage(msg, client);
 	else if (!strcmp("PASS", cmd) || !strcmp("USER", cmd))
 		client.send_message(ERR_ALREADYREGISTERED(client.nick, this->getHostName()));
 	else if (!strcmp("NICK", cmd))
@@ -567,29 +570,23 @@ void IRCserv::parsePartMessage(char *msg, Client &client)
     tmp = strtok(msg, " ");
     if (strcmp("PART", tmp))
         return;
+
     char *_channels = strtok(NULL, " ");
     if (_channels && *_channels)
     {
+		char *_keys = strtok(NULL, "");
         char *chName;
-        char *_reasons = strtok(NULL, "");
-        std::vector<std::string> reasons;
-        if (_reasons)
-            reasons = split(((std::string)_reasons), ' ');
         unsigned long i = 0;
         chName = strtok(_channels, ",");
         while (chName != NULL)
         {
-			char *pass = NULL;
-			std::string channelName = chName;
-			
-
-
-            if (i >= 0 && reasons.size() > i)
-				pass = (char *)reasons[i].c_str();
+			std::cout << chName << std::endl;
+			this->partChannel(std::string(chName), _keys, client);
             chName = strtok(NULL, ",");
             i++;
         }
     }
+	else client.send_message(ERR_NEEDMOREPARAMS(client.nick, hostname));
 }
 std::string IRCserv::getHostName()
 {

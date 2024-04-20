@@ -164,6 +164,21 @@ bool Channel::addClient(Client &client, char *pass)
     return true;
 }
 
+bool Channel::removeClient(Client &client, char *reason)
+{
+    std::vector<Client>::iterator it;
+    for (it = this->clients.begin(); it < this->clients.end(); it++)
+    {
+        if (it->nick == client.nick)
+        {
+            this->clients.erase(it);
+            this->send_message(client, RPL_PART(srv_hostname,client.nick, client.user, name, getReasonForResponse(reason)));
+            return true;
+        }
+    }
+    return false;
+}
+
 void Channel::eraseInvitedClient(Client &client)
 {
     std::vector<Client>::iterator it;
@@ -222,6 +237,34 @@ void IRCserv::addNewChannel(std::string name,char *pass, Client &client)
         
     }
 }
+
+
+void IRCserv::partChannel(std::string name,char *reason, Client &client)
+{
+    Channel *channel = isChannelExisiting(name);
+    if (!channel)
+        client.send_message(ERR_NOSUCHCHANNEL(hostname, name, client.nick));
+    if (!channel->is_member(client))
+        client.send_message(ERR_NOTONCHANNEL(hostname, name));
+    channel->removeClient(client, reason);
+    // try
+    // {
+    //     channel->addClient(client, pass);
+    //     client.send_message(RPL_JOIN(client.nick, client.user, name, client.getIpAddress()));
+    //     client.send_message(RPL_TOPICDISPLAY(this->getHostName(), client.nick, name, channel->getTopic()));
+    //     client.send_message(RPL_TOPICWHOTIME((*channel).getTopicNickSetter(), channel->getTopicTimestamp(),
+    //         client.nick, this->getHostName(), (*channel).getName()));
+    //     client.send_message(RPL_NAMREPLY(this->getHostName(), channel->getListClients(), channel->getName(), client.nick));
+    //     client.send_message(RPL_ENDOFNAMES(this->getHostName(), client.nick, name));
+    //     channel->send_message(client, RPL_JOIN(client.nick, client.user, channel->getName(), client.getIpAddress()));
+    // }
+    // catch(const ClientErrMsgException &e)
+    // {
+    //     e._client.send_message(e.getMessage());
+    // }
+        
+}
+
 
 std::string Channel::getTopicNickSetter()
 {

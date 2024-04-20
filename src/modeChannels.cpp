@@ -23,12 +23,12 @@ void IRCserv::handleMode(char *msg, Client &client)
     applyModeFlags(channelName, modeFlags, additionalParams, client); 
 }
 
-void FInviteOnly(Channel* channel, bool setFlag, const std::string& additionalParams, Client& client, std::string hostName)
+void FInviteOnly(Channel* channel, bool setFlag,  std::string& additionalParams, Client& client, std::string hostName)
 {
     channel->setInviteOnly(setFlag);
 }
 
-void FKey(Channel* channel, bool setFlag, const std::string& additionalParams, Client& client, std::string hostName)
+void FKey(Channel* channel, bool setFlag,  std::string& additionalParams, Client& client, std::string hostName)
 {
     if (setFlag)
     {
@@ -46,7 +46,7 @@ void FKey(Channel* channel, bool setFlag, const std::string& additionalParams, C
 }
 
 
-void FUserLimit(Channel* channel, bool setFlag, const std::string& additionalParams, Client &client, std::string hostName)
+void FUserLimit(Channel* channel, bool setFlag,  std::string& additionalParams, Client &client, std::string hostName)
 {
     int limit = 0;
     if (setFlag)
@@ -65,16 +65,32 @@ void FUserLimit(Channel* channel, bool setFlag, const std::string& additionalPar
     else
        channel->setUserLimit(0);
 }
-
-void FOperator(Channel* channel, bool setFlag, const std::string& additionalParams, Client& client, std::string hostName)
+void FOperator(Channel* channel, bool setFlag,  std::string& additionalParams, Client& client, std::string hostName)
 {
+
     if (setFlag)
-        channel->addOperator(additionalParams, hostName, client);
+    {
+        if (additionalParams.empty())
+            client.send_message(ERR_NEEDMOREPARAMS(client.nick, hostName));
+        else
+        {
+            channel->addOperator(additionalParams, hostName, client);
+        }
+
+    }
     else
-        channel->removeOperator(additionalParams, hostName, client);
+    {
+        if (additionalParams.empty())
+            client.send_message(ERR_NEEDMOREPARAMS(client.nick, hostName));
+        else
+        {
+            channel->removeOperator(additionalParams, hostName, client);
+        }
+    }
 }
 
-void FTopicRestrictions(Channel* channel, bool setFlag, const std::string& additionalParams, Client& client, std::string hostName)
+
+void FTopicRestrictions(Channel* channel, bool setFlag,  std::string& additionalParams, Client& client, std::string hostName)
 {
     channel->isTopicSet = setFlag;
 }
@@ -94,7 +110,7 @@ void IRCserv::applyModeFlags(std::string channelName, std::string modeFlags, std
         return ;
     }
     bool setFlag = true;
-    std::map<char, void (*)(Channel*, bool, const std::string&, Client&, std::string)> modeActions;
+    std::map<char, void (*)(Channel*, bool,  std::string&, Client&, std::string)> modeActions;
     modeActions['i'] = &FInviteOnly;
     modeActions['t'] = &FTopicRestrictions;
     modeActions['k'] = &FKey;
@@ -115,7 +131,7 @@ void IRCserv::applyModeFlags(std::string channelName, std::string modeFlags, std
             continue;
         }
 
-        std::map<char, void (*)(Channel*,  bool, const std::string&, Client&, std::string)>::iterator actionIt = modeActions.find(flag);
+        std::map<char, void (*)(Channel*,  bool, std::string&, Client&, std::string)>::iterator actionIt = modeActions.find(flag);
         if (actionIt != modeActions.end())
         {
             actionIt->second(channel, setFlag, additionalParams, client, this->getHostName());
@@ -131,7 +147,7 @@ void IRCserv::applyModeFlags(std::string channelName, std::string modeFlags, std
             client.send_message(ERR_UNKNOWNMODE(client.nick, this->hostname, channelName, flag));
         }
     }
-    std::cout << channel->isInviteOnly() << std::endl;
+    std::cout << channel->getKey() << std::endl;
 }
 //     std::string key= "";
 //     std::string nickname= "";

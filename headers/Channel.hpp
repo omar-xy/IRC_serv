@@ -39,6 +39,9 @@ class Channel{
         std::string getTopic();
         std::string getKey();
         std::string getMode();
+        std::string getOp();
+        int         getuserLimit();
+
         std::vector<Client> getClients();
         std::string getListClients();
 

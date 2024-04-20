@@ -29,3 +29,13 @@ void       trim(std::string& str) {
     else
         str = "";
 }
+
+
+std::string getReasonForResponse(char *reason)
+{
+    if (!reason)
+        return (std::string(""));
+    std::string resp(" :");
+    resp += std::string(reason);
+    return resp;
+}

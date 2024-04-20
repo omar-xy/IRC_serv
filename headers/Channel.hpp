@@ -65,9 +65,15 @@ class Channel{
 
         void setName(std::string name);
         void setTopic(std::string topic);
+        
+        
         bool addClient(Client &c, char *pass);
-        void send_message(Client &c, std::string message);
+        bool removeClient(Client &c, char *reason);
         bool is_member(Client &c);
+
+
+        void send_message(Client &c, std::string message);
+        
         void setMode(const std::string& newMode);
         void setInviteOnly(bool setFlag);
         void setKey(std::string key);

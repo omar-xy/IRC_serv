@@ -118,7 +118,6 @@ std::string getFirstWord(std::string str)
 
 bool	IRCserv::isValidNick(std::string nick)
 {
-	// printf("Nick: |%s|\n", nick.c_str());
 	for (size_t i = 0; i < nick.length(); i++)
 	{
 		if (isspace(nick[i]))
@@ -139,7 +138,6 @@ std::string IRCserv::removeTail(std::string buff)
 
 void	IRCserv::registeredAction(Client &client, std::string &buff)
 {
-	// printf("Registered: %d, buff: |%s|\n", client.registered, buff.c_str());
 	std::string temp = ParseBuffToRegister(buff);
 	if (client.registered == 0)
 	{

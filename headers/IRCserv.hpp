@@ -52,7 +52,7 @@ class IRCserv {
 		Channel *isChannelExisiting(std::string name);
 		void addNewChannel(std::string name, char *pass, Client &client);
 		void partChannel(std::string name,char *reason, Client &client);
-		void applyModeFlags(std::string channelName, std::string modeFlags, std::string additionalParams, Client &client);
+		void applyModeFlags(std::string channelName, std::string modeFlags, char *addParams, Client &client);
 		void	inviteClinetToChannel(Client &invitedClient, Channel &channel, Client &client);
 		bool isValidNick(std::string nick);
 		std::string removeTail(std::string buff);

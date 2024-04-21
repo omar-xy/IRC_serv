@@ -312,6 +312,7 @@ void Channel::addOperator(const std::string& nickname, std::string hostName, Cli
             {
                 this->fdOps.push_back(it->sock);
                 it->send_message(RPL_YOUREOPER(hostName, client.nick));
+                this->op = nickname;
                 this->_isOperator = true;
                 return;
             }
@@ -400,6 +401,15 @@ std::string Channel::getKey()
 std::string Channel::getMode()
 {
     return mode;
+}
+std::string Channel::getOp()
+{
+    return op;
+}
+
+int Channel::getUserLimit()
+{
+    return userLimit;
 }
 
 

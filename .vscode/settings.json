@@ -1,4 +1,8 @@
 {
     "C_Cpp.errorSquiggles": "enabled",
-    "C_Cpp.default.enableConfigurationSquiggles": true
+    "C_Cpp.default.enableConfigurationSquiggles": true,
+    "files.associations": {
+        "*.json": "jsonc",
+        "vector": "cpp"
+    }
 }

@@ -356,22 +356,30 @@ void IRCserv::handleTopic(char *msg, Client &client)
 	}
 	if (!topic)
 	{
-		if (ch->isTopicSet)
+		if (ch->isTopicSet && ch->isFdOperator(client.sock))
+		{
+			ch->setTopic("");
 			client.send_message(RPL_TOPIC(client.nick, this->getHostName(), channel, ch->getTopicNickSetter(), ch->getTopic()));
+		}
+		else if (!ch->isTopicSet)
+		{
+			ch->setTopic("");
+			client.send_message(RPL_TOPIC(client.nick, this->getHostName(), channel, ch->getTopicNickSetter(), ch->getTopic()));
+		}
 		else
-			client.send_message(RPL_NOTOPIC(client.nick, this->getHostName(), channel));
+			client.send_message(ERR_CHANOPRIVSNEEDED(client.nick, this->getHostName(), channel));
 	}
 	else
 	{
-		if (!strlen(topic) && ch->isTopicSet && ch->isFdOperator(client.sock))
-		{
-			ch->setTopic("");
-			client.send_message(RPL_TOPIC(this->getHostName(), client.nick, channel, ch->getTopicNickSetter(), ""));
-		}
-		else if (strlen(topic) && ch->isFdOperator(client.sock))
+		if (ch->isTopicSet && ch->isFdOperator(client.sock))
 		{
 			ch->setTopic(topic);
 			client.send_message(RPL_TOPIC(client.nick, this->getHostName(), channel, ch->getTopicNickSetter(),ch->getTopic()));
+		}
+		else if (!ch->isTopicSet)
+		{
+			ch->setTopic("");
+			client.send_message(RPL_TOPIC(client.nick, this->getHostName(), channel, ch->getTopicNickSetter(), ch->getTopic()));
 		}
 		else
 			client.send_message(ERR_CHANOPRIVSNEEDED(client.nick, this->getHostName(), channel));
@@ -525,7 +533,7 @@ void IRCserv::parseChannelMessage(char *msg, Client &client)
         char *_keys = strtok(NULL, "");
         std::vector<std::string> keys;
         if (_keys)
-            keys = split(((std::string)_keys), ' ');
+            keys = split(((std::string)_keys), ' ');// no need to type_cast..
         unsigned long i = 0;
         chName = strtok(_channels, ",");
         while (chName != NULL)

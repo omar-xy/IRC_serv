@@ -157,19 +157,16 @@ bool Channel::addClient(Client &client, char *pass)
 {
     if (isClientOnChannel(client))
         throw ClientErrMsgException(ERR_USERONCHANNEL(this->srv_hostname, this->name, client.nick), client);
+    if (this->isInviteOnly() == true)
+        throw ClientErrMsgException(ERR_INVITEONLY(client.nick, this->srv_hostname), client);
     if (this->isPasswordSet)
         if (this->pass.compare(pass))
             throw ClientErrMsgException(ERR_BADCHANNELKEY(client.nick, this->srv_hostname, this->name), client);
-
     this->clients.push_back(client);
-
-
     // check if client invited to channel and remove from invited list
     // if (std::find(this->clientsInvited.begin(), this->clientsInvited.end(), client) != this->clientsInvited.end())
     eraseInvitedClient(client);
-
     client.eraseInvitedChannel(this->name);
-    
     client._channels.push_back(this);
     return true;
 }
@@ -239,22 +236,16 @@ void IRCserv::addNewChannel(std::string name,char *pass, Client &client)
     }
     else
     {
-        std::cout << "Channel existing" << std::endl;
-        //if mode is good
         try
         {
             channel->addClient(client, pass);
-            // std::cout << "clients on channel " <<  channel->getListClients()<< std::endl;
-           
             client.send_message(RPL_JOIN(client.nick, client.user, name, client.getIpAddress()));
             client.send_message(RPL_MODEIS(name, this->getHostName(), "+sn"));
             client.send_message(RPL_TOPICDISPLAY(this->getHostName(), client.nick, name, channel->getTopic()));
             client.send_message(RPL_TOPICWHOTIME((*channel).getTopicNickSetter(), channel->getTopicTimestamp(),
-                client.nick, this->getHostName(), (*channel).getName()));
-                std::string s = RPL_NAMREPLY(this->getHostName(), channel->getListClients(), channel->getName(), client.nick);
-            std::cout << "clients :: "<< s << std::endl;
+                    client.nick, this->getHostName(), (*channel).getName()));
+            std::string s = RPL_NAMREPLY(this->getHostName(), channel->getListClients(), channel->getName(), client.nick);
             client.send_message(s);
-
             client.send_message(RPL_ENDOFNAMES(this->getHostName(), client.nick, name));
             channel->send_message(client, RPL_JOIN(client.nick, client.user, channel->getName(), client.getIpAddress()));
         }
@@ -279,8 +270,6 @@ void IRCserv::partChannel(std::string name,char *_reason, Client &client)
         reason = _reason;
     channel->send_message(RPL_PART(hostname, client.nick, client.user, name, reason));
     channel->removeClient(client);
-    
-        
 }
 
 

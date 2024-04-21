@@ -17,7 +17,7 @@ void IRCserv::handleMode(char *msg, Client &client)
     }
     std::string channelName(target);
     std::string modeFlags(flag);
-    applyModeFlags(channelName, modeFlags, addParams, client); 
+        applyModeFlags(channelName, modeFlags, addParams, client); 
 }
 
 void FInviteOnly(Channel* channel, bool setFlag, const std::string& additionalParams, Client& client, std::string hostName)
@@ -78,7 +78,11 @@ void FTopicRestrictions(Channel* channel, bool setFlag, const std::string& addit
 
 void IRCserv::applyModeFlags(std::string channelName, std::string modeFlags, char *addParams, Client &client)
 {
-    std::vector<std::string> splitParams = split(addParams, ' ');
+    std::vector<std::string> splitParams;
+    if (addParams)
+        splitParams = split(addParams, ' ');
+    else
+        splitParams.push_back("");
     std::string additionalParams = "";
     std::string mode = "";
     Channel *channel = isChannelExisiting(channelName);
@@ -114,16 +118,20 @@ void IRCserv::applyModeFlags(std::string channelName, std::string modeFlags, cha
             setFlag = false;
             continue;
         }
-
+        std::cout << "DEBUG---" << flag << std::endl;
         std::map<char, void (*)(Channel*,  bool, const std::string&, Client&, std::string)>::iterator actionIt = modeActions.find(flag);
+        std::cout << "DEBUG---" << actionIt->first << std::endl;
         if (actionIt != modeActions.end())
         {
-            if (splitParams[i].empty())
+            if (splitParams[i].empty() && flag != 'i' && flag != 't')
             {
                 client.send_message(ERR_NEEDMOREPARAMS(client.nick, this->getHostName()));
                 return;
             }
-            actionIt->second(channel, setFlag, splitParams[i], client, this->getHostName());
+            if (i < splitParams.size())
+                actionIt->second(channel, setFlag, splitParams[i], client, this->getHostName());
+            else if (flag != 'i' && flag != 't')
+                client.send_message(ERR_NEEDMOREPARAMS(client.nick, this->getHostName()));
             i++;
             if (setFlag)
                 mode += "+";

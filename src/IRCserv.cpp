@@ -485,7 +485,6 @@ void	IRCserv::handleInvite(char *msg, Client &client)
 		client.send_message(ERR_NOSUCHNICK(client.nick, this->getHostName(), nick));
 		return;
 	}
-
 	inviteClinetToChannel(*invited, *ch, client);
 }
 

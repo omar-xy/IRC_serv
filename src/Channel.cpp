@@ -419,15 +419,7 @@ std::string Channel::getMode()
 {
     return mode;
 }
-std::string Channel::getOp()
-{
-    return op;
-}
 
-int Channel::getUserLimit()
-{
-    return userLimit;
-}
 
 
 

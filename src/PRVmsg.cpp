@@ -21,10 +21,10 @@ void IRCserv::parsePRIVMSG(char *msg, Client &client)
     if (target[0] == '#')
     {
         Channel *ch = isChannelExisiting(target);
-        if (ch)
+        if (ch) 
         {
             if (ch->is_member(client))
-                ch->send_message(client, text);
+                ch->send_message(PRIVMSG_FORMATCH(client.nick, client.user, this->getHostName(), ch->getName(), text));
             else
                 client.send_message(ERR_CANNOTSENDTOCHAN(client.nick, target, this->getHostName()));
         }
@@ -35,7 +35,7 @@ void IRCserv::parsePRIVMSG(char *msg, Client &client)
     {
         Client *receiver = isClientExisiting(target);
         if (receiver)
-            receiver->send_message(PRIVMSG_FORMAT(client.nick, client.user, client.hostname, target, text));
+            receiver->send_message(PRIVMSG_FORMATUSER(client.nick, target, text));
         else
             client.send_message(ERR_NOSUCHNICK(this->getHostName(), target, client.nick));
     }

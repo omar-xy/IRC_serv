@@ -206,7 +206,9 @@ void	IRCserv::registeredAction(Client &client, std::string &buff)
 	{
 		if (getFirstWord(temp) == "USER")
 		{
-			char *user = strtok((char *)temp.c_str(), " ");
+			char *first= strtok((char *)temp.c_str(), " ");
+			(void )first;
+			char *user = strtok(NULL, " ");
 			char *mode = strtok(NULL, " ");
 			char *unused = strtok(NULL, " ");
 			char *realname = strtok(NULL, "");

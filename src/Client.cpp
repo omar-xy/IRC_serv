@@ -5,8 +5,8 @@ Client::Client()
 {
 	this->sock = -1;
 	this->registered = false;
-	std::string nickname;
-	std::string username;
+	std::string nickname = "";
+	std::string username = "";
 }
 
 Client::Client(int sock)

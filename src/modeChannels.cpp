@@ -134,7 +134,6 @@ void IRCserv::applyModeFlags(std::string channelName, std::string modeFlags, cha
             setFlag = false;
             continue;
         }
-
         std::map<char, void (*)(Channel*,  bool, std::string&, Client&, std::string)>::iterator actionIt = modeActions.find(flag);
         if (actionIt != modeActions.end())
         {
@@ -144,10 +143,13 @@ void IRCserv::applyModeFlags(std::string channelName, std::string modeFlags, cha
                 return;
             }
             if (i < splitParams.size())
+            {
                 actionIt->second(channel, setFlag, splitParams[i], client, this->getHostName());
+                if (flag != 'i' && flag != 't')
+                    i++;
+            }
             else if (flag != 'i' && flag != 't')
                 client.send_message(ERR_NEEDMOREPARAMS(client.nick, this->getHostName()));
-            i++;
             if (setFlag)
                 mode += "+";
             else

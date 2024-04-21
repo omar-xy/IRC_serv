@@ -139,7 +139,7 @@ std::string Channel::getListClients()
             str += "@";
         str += (it)->nick;
     }
-    std::cout << "Clients list of " << this->name << "  : " << str << std::endl;
+    // std::cout << "Clients list of " << this->name << "  : " << str << std::endl;
     return str;
 }
 
@@ -174,7 +174,7 @@ bool Channel::addClient(Client &client, char *pass)
     return true;
 }
 
-bool Channel::removeClient(Client &client, char *reason)
+bool Channel::removeClient(Client &client)
 {
     std::vector<Client>::iterator it;
     for (it = this->clients.begin(); it < this->clients.end(); it++)
@@ -182,7 +182,7 @@ bool Channel::removeClient(Client &client, char *reason)
         if (it->nick == client.nick)
         {
             this->clients.erase(it);
-            this->send_message(client, RPL_PART(srv_hostname,client.nick, client.user, name, getReasonForResponse(reason)));
+            client.eraseChannel(name);
             return true;
         }
     }
@@ -204,13 +204,24 @@ void Channel::eraseInvitedClient(Client &client)
 
 
 
-void Channel::send_message(Client &client, std::string msg)
+void Channel::send_message(std::string msg)
 {
-    (void) client;
     std::vector<Client>::iterator it;
     for (it = this->clients.begin();it < this->clients.end();it++)
         it->send_message(msg);
 }
+
+
+void Channel::send_message(Client &client, std::string msg)
+{
+    std::vector<Client>::iterator it;
+    for (it = this->clients.begin();it < this->clients.end();it++)
+        if (it->nick != client.nick)
+            it->send_message(msg);
+}
+
+
+// std::
 
 void IRCserv::addNewChannel(std::string name,char *pass, Client &client)
 {
@@ -233,11 +244,17 @@ void IRCserv::addNewChannel(std::string name,char *pass, Client &client)
         try
         {
             channel->addClient(client, pass);
+            // std::cout << "clients on channel " <<  channel->getListClients()<< std::endl;
+           
             client.send_message(RPL_JOIN(client.nick, client.user, name, client.getIpAddress()));
+            client.send_message(RPL_MODEIS(name, this->getHostName(), "+sn"));
             client.send_message(RPL_TOPICDISPLAY(this->getHostName(), client.nick, name, channel->getTopic()));
             client.send_message(RPL_TOPICWHOTIME((*channel).getTopicNickSetter(), channel->getTopicTimestamp(),
                 client.nick, this->getHostName(), (*channel).getName()));
-            client.send_message(RPL_NAMREPLY(this->getHostName(), channel->getListClients(), channel->getName(), client.nick));
+                std::string s = RPL_NAMREPLY(this->getHostName(), channel->getListClients(), channel->getName(), client.nick);
+            std::cout << "clients :: "<< s << std::endl;
+            client.send_message(s);
+
             client.send_message(RPL_ENDOFNAMES(this->getHostName(), client.nick, name));
             channel->send_message(client, RPL_JOIN(client.nick, client.user, channel->getName(), client.getIpAddress()));
         }
@@ -250,29 +267,19 @@ void IRCserv::addNewChannel(std::string name,char *pass, Client &client)
 }
 
 
-void IRCserv::partChannel(std::string name,char *reason, Client &client)
+void IRCserv::partChannel(std::string name,char *_reason, Client &client)
 {
     Channel *channel = isChannelExisiting(name);
     if (!channel)
         client.send_message(ERR_NOSUCHCHANNEL(hostname, name, client.nick));
     if (!channel->is_member(client))
         client.send_message(ERR_NOTONCHANNEL(hostname, name));
-    channel->removeClient(client, reason);
-    // try
-    // {
-    //     channel->addClient(client, pass);
-    //     client.send_message(RPL_JOIN(client.nick, client.user, name, client.getIpAddress()));
-    //     client.send_message(RPL_TOPICDISPLAY(this->getHostName(), client.nick, name, channel->getTopic()));
-    //     client.send_message(RPL_TOPICWHOTIME((*channel).getTopicNickSetter(), channel->getTopicTimestamp(),
-    //         client.nick, this->getHostName(), (*channel).getName()));
-    //     client.send_message(RPL_NAMREPLY(this->getHostName(), channel->getListClients(), channel->getName(), client.nick));
-    //     client.send_message(RPL_ENDOFNAMES(this->getHostName(), client.nick, name));
-    //     channel->send_message(client, RPL_JOIN(client.nick, client.user, channel->getName(), client.getIpAddress()));
-    // }
-    // catch(const ClientErrMsgException &e)
-    // {
-    //     e._client.send_message(e.getMessage());
-    // }
+    std::string reason("");
+    if (_reason)
+        reason = _reason;
+    channel->send_message(RPL_PART(hostname, client.nick, client.user, name, reason));
+    channel->removeClient(client);
+    
         
 }
 

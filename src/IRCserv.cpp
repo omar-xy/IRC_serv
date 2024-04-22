@@ -28,6 +28,31 @@ Client	*IRCserv::isClientExisiting(std::string name)
 	return NULL;
 }
 
+
+// void IRCserv::initializeBot(const std::string& nick, const std::string& user, const std::string& realName)
+// {
+//     int botSock = socket(AF_INET, SOCK_STREAM, 0);
+//     if (botSock < 0) 
+// 	{
+//         std::cerr << "Error creating bot socket" << std::endl;
+//         return;
+//     }
+//     struct sockaddr_in serv_addr;
+//     memset(&serv_addr, 0, sizeof(serv_addr));
+//     serv_addr.sin_family = AF_INET;
+//     serv_addr.sin_port = htons(this->port);
+//     serv_addr.sin_addr.s_addr = inet_addr("127.0.0.1");
+//     if (connect(botSock, (struct sockaddr*)&serv_addr, sizeof(serv_addr)) < 0) 
+// 	{
+//         std::cerr << "Bot connection failed" << std::endl;
+//         return;
+//     }
+//     std::string nickCommand = "NICK " + nick + "\r\n";
+//     std::string userCommand = "USER " + user + " 8 * :" + realName + "\r\n";
+//     send(botSock, nickCommand.c_str(), nickCommand.length(), 0);
+//     send(botSock, userCommand.c_str(), userCommand.length(), 0);
+// }
+
 void	IRCserv::init()
 {
 	struct sockaddr_in addr;
@@ -138,6 +163,11 @@ std::string IRCserv::removeTail(std::string buff)
 
 void	IRCserv::registeredAction(Client &client, std::string &buff)
 {
+	if (client.nick == "MyBot")
+	{
+    	client.registered = 3; 
+    	return;
+    }
 	std::string temp = ParseBuffToRegister(buff);
 	if (client.registered == 0)
 	{
@@ -233,6 +263,26 @@ void	IRCserv::registeredAction(Client &client, std::string &buff)
 
 }
 
+// bool IRCserv::isBotConnectedAndRegistered() {
+
+//     std::string botNick = "MyBot";
+
+//     for (std::map<int, Client>::iterator it = clients.begin(); it != clients.end(); ++it) 
+// 	{
+//         const Client& client = it->second;
+//         if (client.nick == botNick) 
+// 		{
+//             // Check if the bot's registration status is complete
+//             // Assuming a registration status of 3 indicates complete registration
+//             if (client.registered == 3) {
+//                 return true; // The bot is connected and registered
+//             }
+//             break; // No need to continue searching if the bot is found
+//         }
+//     }
+
+//     return false; // The bot is not connected or not registered
+// }
 
 void	IRCserv::loop()
 {
@@ -241,7 +291,18 @@ void	IRCserv::loop()
 		int ret = poll(fds.data(), fds.size(), -1);
 		debug("Poll failed", ret);
 		if (fds[0].revents & POLLIN)
+		{
 			addClient();
+		}
+		// 	// Check if the bot is already connected and registered
+		// 	if (!isBotConnectedAndRegistered()) {
+		// 		// If not, initialize the bot
+		// 		initializeBot("MyBot", "myBotUser", "My IRC Bot");
+		// 	} else {
+		// 		// If the bot is already connected, proceed with adding a new client
+		// 	}
+		// }
+		// Handle other events and client interactions as usual
 		for (size_t i = 1; i < fds.size(); i++)
 		{
 			if (fds[i].revents & POLLIN)
@@ -269,9 +330,7 @@ void	IRCserv::loop()
 				else
 				{
 					buff[len] = 0;
-					// remove tailing of limechat client and nc client
 					strcpy(buff, removeTail(buff).c_str());
-
 					std::string temp = buff;
 					int tempStatus = clients[fds[i].fd].registered;
 					if (clients[fds[i].fd].registered < 3)
@@ -283,7 +342,6 @@ void	IRCserv::loop()
 					}
 					else if (tempStatus == 3)
 					{
-						// here we can add application logic
 						std::cout << "Received by `" << clients[fds[i].fd].nick << "`: " << buff << std::endl;
 						handle_message(buff, clients[fds[i].fd]);
 					}

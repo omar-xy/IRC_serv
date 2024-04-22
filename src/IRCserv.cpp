@@ -296,6 +296,7 @@ void	IRCserv::loop()
 
 void IRCserv::handle_message(char *msg, Client &client)
 {
+
 	char *cmd;
 	char *tmp = strdup(msg);
     cmd = strtok(tmp, " ");

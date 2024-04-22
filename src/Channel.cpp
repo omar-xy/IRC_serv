@@ -243,7 +243,7 @@ void IRCserv::addNewChannel(std::string name,char *pass, Client &client)
             client.send_message(RPL_MODEIS(name, this->getHostName(), "+sn"));
             client.send_message(RPL_TOPICDISPLAY(this->getHostName(), client.nick, name, channel->getTopic()));
             client.send_message(RPL_TOPICWHOTIME((*channel).getTopicNickSetter(), channel->getTopicTimestamp(),
-                    client.nick, this->getHostName(), (*channel).getName()));
+                    client.nick, this->getHostName(), channel->getName()));
             std::string s = RPL_NAMREPLY(this->getHostName(), channel->getListClients(), channel->getName(), client.nick);
             client.send_message(s);
             client.send_message(RPL_ENDOFNAMES(this->getHostName(), client.nick, name));

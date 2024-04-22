@@ -38,6 +38,7 @@ class IRCserv {
 		void parsePartMessage(char *msg, Client &client);
 		void parsePRIVMSG(char *msg, Client &client);
 		void handleMode(char *msg, Client &client);
+		void handleBot(char *msg, Client &client);
 
 		// --- INVITE ---
 		void handleInvite(char *msg, Client &client);
@@ -47,6 +48,8 @@ class IRCserv {
 
 		// --- TOPIC ---
 		void handleTopic(char *msg, Client &client);
+		// --- BOT ---
+
 
 		std::string getHostName();
 		Channel *isChannelExisiting(std::string name);

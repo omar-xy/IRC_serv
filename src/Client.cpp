@@ -63,6 +63,12 @@ std::string	Client::getInvitedChannels()
 	return str;
 }
 
+
+std::vector<Channel *> Client::getChannels()
+{
+	return this->_channels;
+}
+
 void Client::leaveAllChannels()
 {
 	// std::vector<Channel>::iterator it;

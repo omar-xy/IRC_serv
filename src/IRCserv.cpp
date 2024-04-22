@@ -323,8 +323,7 @@ void IRCserv::handle_message(char *msg, Client &client)
 	else if (!strcmp("TOPIC", cmd))
 		this->handleTopic(msg, client);
 	else if (!strcmp("BOT", cmd))
-	{
-	}
+		this->handleBot(msg, client);
 }
 
 void IRCserv::handleTopic(char *msg, Client &client)

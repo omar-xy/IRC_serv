@@ -15,7 +15,7 @@ Client::Client(int sock)
 	this->registered = false;
 }
 
-void Client::send_message(char *msg)
+void Client::send_messageCH(char *msg)
 {
 	write(this->sock, msg, strlen(msg));
 }

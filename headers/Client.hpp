@@ -22,7 +22,7 @@ class Client
 
 
 		void send_message(std::string msg);
-		void send_message(char *msg);
+		void send_messageCH(char *msg);
 		std::string getIpAddress();
 		std::vector<Channel *> getChannels();
 

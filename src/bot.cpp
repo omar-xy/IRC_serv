@@ -5,33 +5,37 @@
 #include <ctime>
 #include <vector>
 
-void helpCommand() 
+void helpCommand(Client &client) 
 {
-    std::cout << "/help - Displays this help message." << std::endl;
-    std::cout << "/time - Displays the current time." << std::endl;
-    std::cout << "/channels - Lists the channels the bot has joined." << std::endl;
-    std::cout << "/funFact - Displays a random fact." << std::endl;
+    client.send_message("/help - Displays this help message.\n");
+    client.send_message("/time - Displays the current time.\n");
+    client.send_message("/channels - Lists the channels the bot has joined.\n");
+    client.send_message("/funFact - Displays a random fact.\n");
 }
 
 
-void timeCommand() {
+void timeCommand(Client &client) {
     time_t now = time(0);
     char* dt = ctime(&now);
-    std::cout << "The current date and time is: " << dt << std::endl;
+    std::string ti(dt);
+    client.send_message("The current date and time is: " + ti + "\n");
 }
 
 
-void channelsCommand(const std::vector<Channel *> joinedChannels) 
+void channelsCommand(const std::vector<Channel *> joinedChannels, Client &client) 
 {
     std::cout << "Channels I've joined:" << std::endl;
-    for(unsigned int i = 0; i < joinedChannels.size(); i++) {
-        std::cout << joinedChannels[i]->getName() << std::endl;
+    for(unsigned int i = 0; i < joinedChannels.size(); i++) 
+    {
+        client.send_message(joinedChannels[i]->getName());
+        client.send_message("\n");
     }
 }
 
 
-void funFactCommand() {
-    std::cout << "Random fact: The first computer bug was an actual bug." << std::endl;
+void funFactCommand(Client &client) 
+{
+    client.send_message("Random fact: The first computer bug was an actual bug.");
 }
 
 void IRCserv::handleBot(char *msg, Client &client)
@@ -47,13 +51,13 @@ void IRCserv::handleBot(char *msg, Client &client)
     }
     std::string command(chcmd);
     if (command == "/help") {
-        helpCommand();
+        helpCommand(client);
     } else if (command == "/time") {
-        timeCommand();
+        timeCommand(client);
     } else if (command == "/channels") {
-        channelsCommand(client.getChannels());
+        channelsCommand(client.getChannels(), client);
     } else if (command == "/funFact") {
-        funFactCommand();
+        funFactCommand(client);
     } else {
         std::cout << "Unknown command: " << command << std::endl;
     }

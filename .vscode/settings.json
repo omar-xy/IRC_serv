@@ -3,6 +3,7 @@
     "C_Cpp.default.enableConfigurationSquiggles": true,
     "files.associations": {
         "*.json": "jsonc",
-        "vector": "cpp"
+        "vector": "cpp",
+        "iosfwd": "cpp"
     }
 }

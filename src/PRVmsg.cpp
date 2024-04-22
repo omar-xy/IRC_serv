@@ -5,20 +5,20 @@
 void IRCserv::parsePRIVMSG(char *msg, Client &client)
 {  
     char *prefix = strtok(msg, " ");
-    char *target = strtok(NULL, ":");
+    char *target = strtok(NULL, " ");
     char *text = strtok(NULL, "");
     if  (!prefix || strcmp(prefix, "PRIVMSG"))
         return ;
-    if (text && text[0] == ' ')
+    if (text && text[0] == ':')
         text++;
-    else if (text && text[0] != ' ')
+    else if (text && text[0] != ':')
 		text = strtok(text, " ");
     if (!target || !text)
     {
         client.send_message(ERR_NEEDMOREPARAMS(client.nick, this->getHostName()));
         return ;
     }
-    std::vector<std::string> spTargets = split(target, ' ');
+    std::vector<std::string> spTargets = split(target, ',');
     for (size_t i = 0; i < spTargets.size() ; i++)
     {
         if (spTargets[i][0] == '#')

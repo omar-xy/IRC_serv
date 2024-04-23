@@ -24,6 +24,7 @@
 #define RPL_TOPICDISPLAY(hostname, nick, channel, topic) ":" + hostname + " 332 " + nick + " " + channel + " :" + topic + "\r\n"
 #define RPL_TOPIC(hostname, nick, channel, setter, topic) ":" + hostname + " 332 " + nick + " " + channel + " :" + setter + " has set a new topic: " + topic + "\r\n"
 #define RPL_PART(hostname, nick, username, channel, reason) ":"+nick+"!"+username+ "@" + hostname +" PART "  + channel+" "+reason+ "\r\n"
+#define RPL_QUIT(hostname, nick, username, reason) ":"+nick+"!"+username+ "@" + hostname +" QUIT :"+reason+ "\r\n"
 
 #define RPL_TOPICWHOTIME(topicsetter, time, nick, hostname, channelName) ":" + hostname + " 333 " + nick + " " + channelName + " " + topicsetter + "!~" + topicsetter + "@" + hostname + " " + time + "\r\n"
 #define RPL_NAMREPLY(hostname, clients, channelname, nick) ":" + hostname + " 353 " + nick + " = " + channelname + " :" + clients + "\r\n"

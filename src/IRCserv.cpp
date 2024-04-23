@@ -305,6 +305,8 @@ void IRCserv::handle_message(char *msg, Client &client)
         this->parseChannelMessage(msg, client);
 	else if (!strcmp("PART", cmd))
         this->parsePartMessage(msg, client);
+	else if (!strcmp("QUIT", cmd))
+        this->parseQuitMessage(msg, client);
 	else if (!strcmp("PASS", cmd) || !strcmp("USER", cmd))
 		client.send_message(ERR_ALREADYREGISTERED(client.nick, this->getHostName()));
 	else if (!strcmp("NICK", cmd))
@@ -436,7 +438,10 @@ void IRCserv::handleKick(char *msg, Client &client)
 		return;
 	}
 	// send reply to kick client from channel
-	kicked->send_message(RPL_KICK(client.nick, client.user, this->getHostName(), channel, kicked->nick, reason));
+	std::string reasonStr = reason;
+	if (reasonStr.size() > 0 && reasonStr[0] == ':')
+		reasonStr = reasonStr.substr(1);
+	ch->send_message(RPL_KICK(client.nick, client.user, this->getHostName(), channel, kicked->nick, reasonStr));
 	kicked->eraseChannel(ch->getName());
 	ch->eraseClient(*kicked);
 }
@@ -548,6 +553,7 @@ void IRCserv::parseChannelMessage(char *msg, Client &client)
 					return;
 				}
 			}
+		
 			else 
 			{
 				if (i != 0)
@@ -570,6 +576,20 @@ void IRCserv::parseChannelMessage(char *msg, Client &client)
     }
 }
 
+
+void IRCserv::parseQuitMessage(char *msg, Client &client)
+{
+    char *tmp;
+	(void) client;
+    tmp = strtok(msg, " ");
+    if (strcmp("QUIT", tmp))
+        return;
+	std::string reason = strtok(NULL, "");
+	if (reason.size() > 0 && reason[0] == ':')
+		reason = reason.substr(1);
+    client.leaveAllChannels(reason);
+}
+
 void IRCserv::parsePartMessage(char *msg, Client &client)
 {
     char *tmp;
@@ -587,7 +607,7 @@ void IRCserv::parsePartMessage(char *msg, Client &client)
         chName = strtok(_channels, ",");
         while (chName != NULL)
         {
-			std::cout << chName << std::endl;
+			std::cout <<"parting channel  : "<< chName << std::endl;
 			this->partChannel(std::string(chName), _keys, client);
             chName = strtok(NULL, ",");
             i++;

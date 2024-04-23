@@ -69,11 +69,11 @@ std::vector<Channel *> Client::getChannels()
 	return this->_channels;
 }
 
-void Client::leaveAllChannels()
+void Client::leaveAllChannels(std::string reason)
 {
 	std::vector<Channel*>::iterator it;
 	for (it = this->_channels.begin(); it < this->_channels.end(); it++)
-		(*it)->removeClient(*this, "");
+		(*it)->quitClient(*this, reason);
 		
 }
 

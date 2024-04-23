@@ -1,9 +1,12 @@
 #pragma once
 
 #include "header.hpp"
+#include "IRCserv.hpp"
+#include "replies.hpp"
 #include <cstdlib>
 
 class Client;
+class IRCserv;
 
 class Channel{
    
@@ -12,7 +15,6 @@ class Channel{
         std::string name;
         std::string pass;
         std::string op;
-        std::vector<int> fdOps;
         std::vector<Client> clients;
 
         std::string topic;
@@ -24,9 +26,12 @@ class Channel{
         int userLimit;
         std::string mode;
 
+        IRCserv *serv;
+
         bool _isChannelNameValid(std::string name);
 
     public:
+        std::vector<int> fdOps;
         bool        isPasswordSet;
         bool        isInviteOnlySet;
         bool        _isOperator;
@@ -52,6 +57,7 @@ class Channel{
         void eraseOp(int fd);
 
 
+
         bool isFdOperator(int fd);
         bool isClientOnChannel(Client client);
         bool isInviteOnly();
@@ -69,7 +75,7 @@ class Channel{
         
         
         bool addClient(Client &c, char *pass);
-        bool removeClient(Client &c);
+        bool removeClient(Client &c, std::string reason);
         bool is_member(Client &c);
 
 

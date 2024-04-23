@@ -71,11 +71,9 @@ std::vector<Channel *> Client::getChannels()
 
 void Client::leaveAllChannels()
 {
-	// std::vector<Channel>::iterator it;
-	// for (it = this->_channels.begin(); it < this->_channels.end(); it++)
-	// {
-	// 	it->
-	// }
+	std::vector<Channel*>::iterator it;
+	for (it = this->_channels.begin(); it < this->_channels.end(); it++)
+		(*it)->removeClient(*this, "");
 		
 }
 
@@ -116,3 +114,14 @@ const std::string ClientErrMsgException::getMessage() const
 {
 	return this->_cmessage;
 }
+
+bool Client::operator== (const Client &c)
+{ 
+	if (c.nick == this->nick) 
+		return true; 
+	return false; 
+} 
+bool Client::operator!= (const Client &c)
+{ 
+	return (!(this == &c));
+} 

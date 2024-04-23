@@ -35,6 +35,10 @@ class Client
 		void eraseInvitedChannel(std::string channelName);
 		void eraseChannel(std::string channelName);
 
+		bool operator == (const Client &c);
+		bool operator != (const Client &c);
+
+
 };
 
 class ClientErrMsgException : public std::exception

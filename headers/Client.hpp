@@ -31,9 +31,13 @@ class Client
 		std::string getInvitedChannels();
 
 		void disconnect();
-		void leaveAllChannels();
+		void leaveAllChannels(std::string reason);
 		void eraseInvitedChannel(std::string channelName);
 		void eraseChannel(std::string channelName);
+
+		bool operator == (const Client &c);
+		bool operator != (const Client &c);
+
 
 };
 

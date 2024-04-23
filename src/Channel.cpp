@@ -31,16 +31,20 @@ void Channel::eraseOp(int fd)
     for (it = this->fdOps.begin(); it < this->fdOps.end(); it++)
     {
         if (*it == fd)
+        {
             this->fdOps.erase(it);
+            std::cout << "fd erased\n";
+        }
     }
 }
 
-Channel::Channel(std::string name, char *pass, Client &client, std::string srv_hst)
+Channel::Channel(std::string name, char *pass, Client &client, IRCserv *srv)
 {
+    this->serv = srv;
+    this->srv_hostname = this->serv->getHostName();
     if (!this->_isChannelNameValid(name))
-        throw ClientErrMsgException(ERR_BADCHANNELNAME(client.nick, srv_hst, name), client);
+        throw ClientErrMsgException(ERR_BADCHANNELNAME(client.nick, srv_hostname, name), client);
     this->name = name;
-    
     if (pass)
     {
         this->isPasswordSet = true;
@@ -52,7 +56,6 @@ Channel::Channel(std::string name, char *pass, Client &client, std::string srv_h
     this->topic_nicksetter = client.nick;
     this->topic_usersetter = client.user;
     this->topic_set_timestamp = time(NULL);
-    this->srv_hostname = srv_hst;
 }
 
 bool Channel::_isChannelNameValid(std::string name)
@@ -152,39 +155,95 @@ bool Channel::isClientOnChannel(Client client)
             return true;
     return false;
 }
+bool Channel::isClientInvited(Client &client)
+{
+    std::vector<Client>::iterator it;
+    for (it = this->clientsInvited.begin(); it < this->clientsInvited.end(); it++)
+    {
+        if (it->nick == client.nick)
+            return true;
+    }
+    return false;
+
+}
+
 
 bool Channel::addClient(Client &client, char *pass)
 {
     if (isClientOnChannel(client))
         throw ClientErrMsgException(ERR_USERONCHANNEL(this->srv_hostname, this->name, client.nick), client);
-    if (this->isInviteOnly() == true)
-        throw ClientErrMsgException(ERR_INVITEONLY(client.nick, this->srv_hostname), client);
     if (this->isPasswordSet)
-        if (this->pass.compare(pass))
+    {
+        if (!pass || this->pass.compare(pass))
             throw ClientErrMsgException(ERR_BADCHANNELKEY(client.nick, this->srv_hostname, this->name), client);
+    }
+    if (this->getuserLimit() > 0 && this->clients.size() >= this->getuserLimit())
+        throw ClientErrMsgException(ERR_CHANNELISFULL(client.nick, this->name), client);
+    if (this->isInviteOnly() == true && !isClientInvited(client))
+        throw ClientErrMsgException(ERR_INVITEONLY(client.nick, this->srv_hostname), client);
+    else eraseInvitedClient(client);
     this->clients.push_back(client);
-    // check if client invited to channel and remove from invited list
-    // if (std::find(this->clientsInvited.begin(), this->clientsInvited.end(), client) != this->clientsInvited.end())
-    eraseInvitedClient(client);
-    client.eraseInvitedChannel(this->name);
+    
     client._channels.push_back(this);
     return true;
 }
 
-bool Channel::removeClient(Client &client)
+bool Channel::partClient(Client &client, std::string reason)
 {
+    this->send_message(client, RPL_PART(srv_hostname, client.nick, client.user, name, reason));
+    client.send_message(RPL_PART(srv_hostname, client.nick, client.user, name, reason));
+    std::cout << "Client " << client.nick << " removed from channel " << this->name << std::endl;
     std::vector<Client>::iterator it;
     for (it = this->clients.begin(); it < this->clients.end(); it++)
     {
         if (it->nick == client.nick)
         {
             this->clients.erase(it);
-            client.eraseChannel(name);
-            return true;
+            if (this->isFdOperator(client.sock))
+            {
+                this->eraseOp(client.sock);
+                if (this->fdOps.size() == 0)
+                {
+                    this->_isOperator = false;
+                    if (this->clients.size() == 0)
+                        serv->removeChannel(this->name);
+                    else 
+                        this->addOperator(this->clients[0].nick, this->srv_hostname, this->clients[0]);
+                }
+            }
+            break;
         }
     }
-    return false;
+    return true;
 }
+
+bool Channel::quitClient(Client &client, std::string reason)
+{
+    this->send_message(client, RPL_QUIT(srv_hostname, client.nick, client.user, reason));
+    std::vector<Client>::iterator it;
+    for (it = this->clients.begin(); it < this->clients.end(); it++)
+    {
+        if (it->nick == client.nick)
+        {
+            this->clients.erase(it);
+            if (this->isFdOperator(client.sock))
+            {
+                this->eraseOp(client.sock);
+                if (this->fdOps.size() == 0)
+                {
+                    this->_isOperator = false;
+                    if (this->clients.size() == 0)
+                        serv->removeChannel(this->name);
+                    else 
+                        this->addOperator(this->clients[0].nick, this->srv_hostname, this->clients[0]);
+                }
+            }
+            break;
+        }
+    }
+    return true;
+}
+
 
 void Channel::eraseInvitedClient(Client &client)
 {
@@ -194,6 +253,7 @@ void Channel::eraseInvitedClient(Client &client)
         if (it->nick == client.nick)
         {
             this->clientsInvited.erase(it);
+            client.eraseInvitedChannel(this->name);
             return;
         }
     }
@@ -225,27 +285,31 @@ void IRCserv::addNewChannel(std::string name,char *pass, Client &client)
     Channel *channel = isChannelExisiting(name);
     if (!channel)
     {
-        channel = new Channel(name, pass,client, this->getHostName());
+        channel = new Channel(name, pass,client, this);
         this->channels.push_back(channel);
-        channel->setOperator(client, true);
         client.send_message(RPL_JOIN(client.nick, client.user, name, client.getIpAddress()));
         client.send_message(RPL_MODEIS(name, this->getHostName(), "+sn"));
         client.send_message(RPL_NAMREPLY(this->getHostName(), channel->getListClients(), channel->getName(), client.nick));
         client.send_message(RPL_ENDOFNAMES(this->getHostName(), client.nick, name));
         // std::cout << "Channel created and added" << std::endl;
+        
     }
     else
     {
+        std::cout << "Channel existing" << std::endl;
+        //if mode is good
         try
         {
             channel->addClient(client, pass);
+            // std::cout << "clients on channel " <<  channel->getListClients()<< std::endl;
+           
             client.send_message(RPL_JOIN(client.nick, client.user, name, client.getIpAddress()));
             client.send_message(RPL_MODEIS(name, this->getHostName(), "+sn"));
             client.send_message(RPL_TOPICDISPLAY(this->getHostName(), client.nick, name, channel->getTopic()));
             client.send_message(RPL_TOPICWHOTIME((*channel).getTopicNickSetter(), channel->getTopicTimestamp(),
-                    client.nick, this->getHostName(), channel->getName()));
-            std::string s = RPL_NAMREPLY(this->getHostName(), channel->getListClients(), channel->getName(), client.nick);
-            client.send_message(s);
+                client.nick, this->getHostName(), (*channel).getName()));
+            client.send_message(RPL_NAMREPLY(this->getHostName(), channel->getListClients(), channel->getName(), client.nick));
+
             client.send_message(RPL_ENDOFNAMES(this->getHostName(), client.nick, name));
             channel->send_message(client, RPL_JOIN(client.nick, client.user, channel->getName(), client.getIpAddress()));
         }
@@ -257,6 +321,30 @@ void IRCserv::addNewChannel(std::string name,char *pass, Client &client)
     }
 }
 
+void IRCserv::removeChannel(std::string name)
+{
+    Channel *channel = isChannelExisiting(name);
+    if (!channel)
+        return;
+    std::vector<Channel *>::iterator it;
+    for (it = this->channels.begin(); it < this->channels.end(); it++)
+    {
+        if ((*it)->getName() == name)
+        {
+            if ((*it)->getClients().size() > 0)
+            {
+                std::vector<Client>::iterator itc;
+                for (itc = (*it)->getClients().begin(); itc < (*it)->getClients().end(); itc++)
+                {
+                    (*it)->partClient(*itc, "");
+                }
+            }
+            this->channels.erase(it);
+            delete channel;
+            return;
+        }
+    }
+}
 
 void IRCserv::partChannel(std::string name,char *_reason, Client &client)
 {
@@ -268,8 +356,9 @@ void IRCserv::partChannel(std::string name,char *_reason, Client &client)
     std::string reason("");
     if (_reason)
         reason = _reason;
-    channel->send_message(RPL_PART(hostname, client.nick, client.user, name, reason));
-    channel->removeClient(client);
+    channel->partClient(client, reason);
+    
+        
 }
 
 
@@ -301,19 +390,22 @@ void Channel::addOperator(const std::string& nickname, std::string hostName, Cli
 {
     if (isNickInChannel(nickname) == true)
     {
+                    std::cout << "nick found 0\n";
+
         std::vector<Client>::iterator it;
         for (it = this->clients.begin(); it < this->clients.end(); it++)
         {
             if (it->nick == nickname)
             {
                 this->fdOps.push_back(it->sock);
-                it->send_message(RPL_YOUREOPER(hostName, client.nick));
-                this->op = nickname;
+                std::cout << "Operator added " << client.nick << std::endl;
+                this->send_message(RPL_MODEISOP(name, hostName, "+o", nickname));
+                client.send_message(RPL_YOUREOPER(hostName, client.nick));
                 this->_isOperator = true;
                 return;
             }
         }
-    }
+    } 
     else
         client.send_message(ERR_USERNOTINCHANNEL(hostName,  this->getName()));
 }
@@ -322,6 +414,7 @@ void Channel::removeOperator(const std::string& nickname, std::string hostName, 
 {
     if (isNickInChannel(nickname) == true)
     {
+
         std::vector<Client>::iterator it;
         for (it = this->clients.begin(); it < this->clients.end(); it++)
         {
@@ -408,7 +501,6 @@ std::string Channel::getMode()
 {
     return mode;
 }
-
 
 
 

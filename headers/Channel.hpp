@@ -1,9 +1,12 @@
 #pragma once
 
 #include "header.hpp"
+#include "IRCserv.hpp"
+#include "replies.hpp"
 #include <cstdlib>
 
 class Client;
+class IRCserv;
 
 class Channel{
    
@@ -12,7 +15,6 @@ class Channel{
         std::string name;
         std::string pass;
         std::string op;
-        std::vector<int> fdOps;
         std::vector<Client> clients;
 
         std::string topic;
@@ -24,9 +26,12 @@ class Channel{
         int userLimit;
         std::string mode;
 
+        IRCserv *serv;
+
         bool _isChannelNameValid(std::string name);
 
     public:
+        std::vector<int> fdOps;
         bool        isPasswordSet;
         bool        isInviteOnlySet;
         bool        _isOperator;
@@ -52,6 +57,7 @@ class Channel{
         void eraseOp(int fd);
 
 
+
         bool isFdOperator(int fd);
         bool isClientOnChannel(Client client);
         bool isInviteOnly();
@@ -69,7 +75,8 @@ class Channel{
         
         
         bool addClient(Client &c, char *pass);
-        bool removeClient(Client &c);
+        bool partClient(Client &c, std::string reason);
+        bool quitClient(Client &c, std::string reason);
         bool is_member(Client &c);
 
 
@@ -77,20 +84,21 @@ class Channel{
         void send_message(std::string message);
         
         void setMode(const std::string& newMode);
-        void setInviteOnly(bool setFlag);
         void setKey(std::string key);
         void setUserLimit(int limit);
         void setTopicRestrictions(bool setFlag);
-        void setOperator(Client &client, bool setFlag);
 
+        void setOperator(Client &client, bool setFlag);
         void addOperator(const std::string& nickname, std::string hostname, Client &client);
         void removeOperator(const std::string& nickname, std::string hostName, Client &client);
 
         void addInvited(Client &client);
+        void setInviteOnly(bool setFlag);
+        bool isClientInvited(Client &client);
         // Client& getClientByNick(std::string nickname);
 
         // static void parseChannelMessage(char *msg, Client client);
 
-        Channel(std::string name, char *pass, Client &client, std::string srv_hst);
+        Channel(std::string name, char *pass, Client &client, IRCserv *serv);
         ~Channel();
 };

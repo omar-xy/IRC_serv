@@ -36,6 +36,7 @@ class IRCserv {
 		void handle_message(char *msg, Client &client);
         void parseChannelMessage(char *msg, Client &client);
 		void parsePartMessage(char *msg, Client &client);
+		void parseQuitMessage(char *msg, Client &client);
 		void parsePRIVMSG(char *msg, Client &client);
 		void handleMode(char *msg, Client &client);
 		void handleBot(char *msg, Client &client);
@@ -51,9 +52,7 @@ class IRCserv {
 		// --- BOT ---
 
 
-		std::string getHostName();
 		Channel *isChannelExisiting(std::string name);
-		void addNewChannel(std::string name, char *pass, Client &client);
 		void partChannel(std::string name,char *reason, Client &client);
 		void applyModeFlags(std::string channelName, std::string modeFlags, char *addParams, Client &client);
 		void inviteClinetToChannel(Client &invitedClient, Channel &channel, Client &client);
@@ -64,6 +63,11 @@ class IRCserv {
 	public:
 		IRCserv(std::string port, std::string password);
 		Client *isClientExisiting(std::string name);
+		
+		std::string getHostName();
+
+		void addNewChannel(std::string name, char *pass, Client &client);
+		void removeChannel(std::string name);
 		void	init();
 		void	debug(std::string msg, int status);
 		void	loop();

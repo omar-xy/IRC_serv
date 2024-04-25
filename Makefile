@@ -3,8 +3,7 @@ SRC		=		src/Client.cpp	\
 				src/utils.cpp	\
 				src/IRCserv.cpp	\
 				src/PRVmsg.cpp	\
-				src/modeChannels.cpp	\
-				src/bot.cpp	\
+				src/modeChannels.cpp \
 				src/main.cpp
 
 OBJ		=		$(SRC:.cpp=.o)

@@ -31,10 +31,7 @@ void Channel::eraseOp(int fd)
     for (it = this->fdOps.begin(); it < this->fdOps.end(); it++)
     {
         if (*it == fd)
-        {
             this->fdOps.erase(it);
-            std::cout << "fd erased\n";
-        }
     }
 }
 
@@ -49,6 +46,7 @@ Channel::Channel(std::string name, char *pass, Client &client, IRCserv *srv)
     {
         this->isPasswordSet = true;
         this->pass = pass;
+        this->setMode("+k");
     }
     else this->isPasswordSet = false;
     this->addClient(client, pass);
@@ -288,7 +286,7 @@ void IRCserv::addNewChannel(std::string name,char *pass, Client &client)
         channel = new Channel(name, pass,client, this);
         this->channels.push_back(channel);
         client.send_message(RPL_JOIN(client.nick, client.user, name, client.getIpAddress()));
-        client.send_message(RPL_MODEIS(name, this->getHostName(), "+sn"));
+        client.send_message(RPL_MODEIS(name, this->getHostName(), channel->getMode()));
         client.send_message(RPL_NAMREPLY(this->getHostName(), channel->getListClients(), channel->getName(), client.nick));
         client.send_message(RPL_ENDOFNAMES(this->getHostName(), client.nick, name));
         // std::cout << "Channel created and added" << std::endl;
@@ -304,7 +302,7 @@ void IRCserv::addNewChannel(std::string name,char *pass, Client &client)
             // std::cout << "clients on channel " <<  channel->getListClients()<< std::endl;
            
             client.send_message(RPL_JOIN(client.nick, client.user, name, client.getIpAddress()));
-            client.send_message(RPL_MODEIS(name, this->getHostName(), "+sn"));
+            client.send_message(RPL_MODEIS(name, this->getHostName(), channel->getMode()));
             client.send_message(RPL_TOPICDISPLAY(this->getHostName(), client.nick, name, channel->getTopic()));
             client.send_message(RPL_TOPICWHOTIME((*channel).getTopicNickSetter(), channel->getTopicTimestamp(),
                 client.nick, this->getHostName(), (*channel).getName()));
@@ -390,15 +388,13 @@ void Channel::addOperator(const std::string& nickname, std::string hostName, Cli
 {
     if (isNickInChannel(nickname) == true)
     {
-                    std::cout << "nick found 0\n";
-
         std::vector<Client>::iterator it;
         for (it = this->clients.begin(); it < this->clients.end(); it++)
         {
             if (it->nick == nickname)
             {
                 this->fdOps.push_back(it->sock);
-                std::cout << "Operator added " << client.nick << std::endl;
+                std::cout << "Operator added " << std::endl;
                 this->send_message(RPL_MODEISOP(name, hostName, "+o", nickname));
                 client.send_message(RPL_YOUREOPER(hostName, client.nick));
                 this->_isOperator = true;
@@ -421,7 +417,9 @@ void Channel::removeOperator(const std::string& nickname, std::string hostName, 
             if (it->nick == nickname)
             {
                 eraseOp(it->sock);
-                it->send_message(ERR_CHANOPRIVSNEEDED(it->nick, hostName, this->getName()));
+                this->send_message(RPL_MODEISOP(name, hostName, "-o", nickname));
+                // client.send_message(RPL_YOUREOPER(hostName, client.nick));
+                // it->send_message(ERR_CHANOPRIVSNEEDED(it->nick, hostName, this->getName()));
                 this->_isOperator = false;
                 return;
             }

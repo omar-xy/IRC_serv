@@ -13,6 +13,7 @@ class Client
 		std::string		hostname;
 		std::string		realname;
 		std::string		mode;
+		std::string		line; // PASS xxx/r/nNICK 
 		std::vector<Channel *> _channels;
 		std::vector<std::string> invitedChannels;
 		int			registered;

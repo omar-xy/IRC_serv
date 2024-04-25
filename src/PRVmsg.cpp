@@ -27,7 +27,7 @@ void IRCserv::parsePRIVMSG(char *msg, Client &client)
             if (ch) 
             {
                 if (ch->is_member(client))
-                    ch->send_message(PRIVMSG_FORMATCH(client.nick, client.user, this->getHostName(), ch->getName(), text));
+                    ch->send_message(client, PRIVMSG_FORMATCH(client.nick, client.user, this->getHostName(), ch->getName(), text));
                 else
                     client.send_message(ERR_CANNOTSENDTOCHAN(client.nick, spTargets[i], this->getHostName()));
             }

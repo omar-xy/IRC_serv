@@ -10,10 +10,15 @@ void IRCserv::handleMode(char *msg, Client &client)
     char *addParams = strtok(NULL, "");
     if (!pref || strcmp("MODE", pref))
         return;
-    if (!flag || !target)
+    if (!target)
     {
         client.send_message(ERR_NEEDMOREPARAMS(client.nick, this->getHostName()));
         return;
+    }
+    else if (!flag)
+    {
+        client.send_message(RPL_CHANNELMODES(this->getHostName(), target, client.nick, "+i+k"));
+        return ;
     }
     std::string channelName(target);
     std::string modeFlags(flag);
@@ -53,14 +58,24 @@ void FUserLimit(Channel* channel, bool setFlag,  std::string& additionalParams, 
         else
         {
             limit = atoi(additionalParams.c_str());
-            if (limit)
+            if (limit && (limit > 0 && limit < 1000))
+            {
                 channel->setUserLimit(limit);
+                channel->send_message(RPL_MODEISLIMIT(channel->getName(), hostName, "+l", additionalParams));// 3ndak
+            }
             else
+            {
                 channel->setUserLimit(0);
+                channel->send_message(RPL_MODEISLIMIT(channel->getName(), hostName, "-l", "0"));// 3ndak
+
+            }
         }
     }
     else
-       channel->setUserLimit(0);
+    {
+        channel->setUserLimit(0);
+        channel->send_message(RPL_MODEISLIMIT(channel->getName(), hostName, "-l", "0"));
+    }
 }
 void FOperator(Channel* channel, bool setFlag,  std::string& additionalParams, Client& client, std::string hostName)
 {
@@ -81,7 +96,7 @@ void FOperator(Channel* channel, bool setFlag,  std::string& additionalParams, C
             client.send_message(ERR_NEEDMOREPARAMS(client.nick, hostName));
         else
         {
-            channel->removeOperator(additionalParams, hostName, client);
+            channel->removeOperator(additionalParams, hostName, client);// fix it
         }
     }
 }
@@ -89,7 +104,16 @@ void FOperator(Channel* channel, bool setFlag,  std::string& additionalParams, C
 
 void FTopicRestrictions(Channel* channel, bool setFlag,  std::string& additionalParams, Client& client, std::string hostName)
 {
-    channel->isTopicSet = setFlag;
+    if (setFlag)
+    {
+        channel->isTopicSet = setFlag;
+        channel->send_message(RPL_MODEIS(channel->getName(), hostName, "+t"));
+    }
+    else
+    {
+        channel->isTopicSet = setFlag;
+        channel->send_message(RPL_MODEIS(channel->getName(), hostName, "-t"));
+    }
 }
 
 void IRCserv::applyModeFlags(std::string channelName, std::string modeFlags, char *addParams, Client &client)
@@ -119,7 +143,6 @@ void IRCserv::applyModeFlags(std::string channelName, std::string modeFlags, cha
     modeActions['k'] = &FKey;
     modeActions['o'] = &FOperator;
     modeActions['l'] = &FUserLimit;
-
     size_t i = 0;
     for (std::string::iterator it = modeFlags.begin(); it != modeFlags.end(); ++it)
     {
@@ -137,7 +160,7 @@ void IRCserv::applyModeFlags(std::string channelName, std::string modeFlags, cha
         std::map<char, void (*)(Channel*,  bool, std::string&, Client&, std::string)>::iterator actionIt = modeActions.find(flag);
         if (actionIt != modeActions.end())
         {
-            if (splitParams[i].empty() && flag != 'i' && flag != 't')
+            if (splitParams[i].empty() && flag != 'i' && flag != 't' && setFlag == true)
             {
                 client.send_message(ERR_NEEDMOREPARAMS(client.nick, this->getHostName()));
                 return;
@@ -159,7 +182,8 @@ void IRCserv::applyModeFlags(std::string channelName, std::string modeFlags, cha
         }
         else
         {
-            client.send_message(ERR_UNKNOWNMODE(client.nick, this->hostname, channelName, flag));
+            if (flag != 's' && flag != 'n')
+                client.send_message(ERR_UNKNOWNMODE(client.nick, this->hostname, channelName, flag));
         }
     }
     std::cout << channel->getKey() << std::endl;

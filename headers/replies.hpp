@@ -20,13 +20,20 @@
 #define ERR_BADCHANNELKEY(nick, hostname, channelName) ":" + hostname + " 475 " + nick + " " + channelName + " :Cannot join channel (+K) - bad key\r\n"
 #define ERR_INVITEONLY(nick, channelName) ":" + nick + " 473 " + channelName + " :Cannot join channel (+i)\r\n"
 
+// //topic
+// S <-   :dan!d@Clk-830D7DDC TOPIC #v3 :This is a cool channel!!
+// S <-   :irc.example.com 332 dan #v4 :Coolest topic
+// S <-   :irc.example.com 333 dan #v4 dan 1547858123
+
+#define RPL_NOTOPIC(nick, hostname, channel) ":" + hostname + " 331 " + nick + " " + channel + " :No topic is set\r\n"
+#define RPL_TOPIC(nick, hostname, channel, topic) ":" + hostname + " 332 " + nick + " " + channel + " :" + topic + "\r\n"
+#define RPL_TOPICTIME(nick, hostname, channel, nickSeter, time) ":" + hostname + " 333 " + nick + " " + channel + " " + nickSeter + " " + time + "\r\n"
+
+
 #define RPL_JOIN(nick, username, channelname, ipaddress) ":" + nick + "!~" + username + "@" + ipaddress + " JOIN " + channelname + "\r\n"
-#define RPL_TOPICDISPLAY(hostname, nick, channel, topic) ":" + hostname + " 332 " + nick + " " + channel + " :" + topic + "\r\n"
-#define RPL_TOPIC(hostname, nick, channel, setter, topic) ":" + hostname + " 332 " + nick + " " + channel + " :" + setter + " has set a new topic: " + topic + "\r\n"
 #define RPL_PART(hostname, nick, username, channel, reason) ":"+nick+"!"+username+ "@" + hostname +" PART "  + channel+" "+reason+ "\r\n"
 #define RPL_QUIT(hostname, nick, username, reason) ":"+nick+"!"+username+ "@" + hostname +" QUIT :"+reason+ "\r\n"
 
-#define RPL_TOPICWHOTIME(topicsetter, time, nick, hostname, channelName) ":" + hostname + " 333 " + nick + " " + channelName + " " + topicsetter + "!~" + topicsetter + "@" + hostname + " " + time + "\r\n"
 #define RPL_NAMREPLY(hostname, clients, channelname, nick) ":" + hostname + " 353 " + nick + " = " + channelname + " :" + clients + "\r\n"
 #define RPL_ENDOFNAMES(hostname, nick, channelname) ":" + hostname + " 366 " + nick + " " + channelname + " :END of /NAMES list\r\n"
 

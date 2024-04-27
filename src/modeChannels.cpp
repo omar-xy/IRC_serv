@@ -17,12 +17,13 @@ void IRCserv::handleMode(char *msg, Client &client)
     }
     else if (!flag)
     {
-        client.send_message(RPL_CHANNELMODES(this->getHostName(), target, client.nick, "+i+k"));
+        Channel *channel = isChannelExisiting(target);
+        client.send_message(RPL_CHANNELMODES(this->getHostName(), target, client.nick, channel->getMode()));
         return ;
     }
     std::string channelName(target);
     std::string modeFlags(flag);
-        applyModeFlags(channelName, modeFlags, addParams, client); 
+        applyModeFlags(channelName, modeFlags, addParams, client);
 }
 
 void FInviteOnly(Channel* channel, bool setFlag,  std::string& additionalParams, Client& client, std::string hostName)

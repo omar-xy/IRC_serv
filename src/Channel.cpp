@@ -3,6 +3,8 @@
 
 // Channel::Channel()
 // {
+//     this->_isOperator = false;
+
 
 // }
 
@@ -172,7 +174,7 @@ bool Channel::addClient(Client &client, char *pass)
         throw ClientErrMsgException(ERR_USERONCHANNEL(this->srv_hostname, this->name, client.nick), client);
     if (this->isPasswordSet)
     {
-        if (!pass || this->pass.compare(pass))
+        if (!pass || this->pass != pass)
             throw ClientErrMsgException(ERR_BADCHANNELKEY(client.nick, this->srv_hostname, this->name), client);
     }
     if (this->getuserLimit() > 0 && this->clients.size() >= this->getuserLimit())
@@ -181,7 +183,6 @@ bool Channel::addClient(Client &client, char *pass)
         throw ClientErrMsgException(ERR_INVITEONLY(client.nick, this->srv_hostname), client);
     else eraseInvitedClient(client);
     this->clients.push_back(client);
-    
     client._channels.push_back(this);
     return true;
 }
@@ -289,25 +290,19 @@ void IRCserv::addNewChannel(std::string name,char *pass, Client &client)
         client.send_message(RPL_MODEIS(name, this->getHostName(), channel->getMode()));
         client.send_message(RPL_NAMREPLY(this->getHostName(), channel->getListClients(), channel->getName(), client.nick));
         client.send_message(RPL_ENDOFNAMES(this->getHostName(), client.nick, name));
-        // std::cout << "Channel created and added" << std::endl;
         
     }
     else
     {
         std::cout << "Channel existing" << std::endl;
-        //if mode is good
         try
         {
             channel->addClient(client, pass);
-            // std::cout << "clients on channel " <<  channel->getListClients()<< std::endl;
-           
             client.send_message(RPL_JOIN(client.nick, client.user, name, client.getIpAddress()));
             client.send_message(RPL_MODEIS(name, this->getHostName(), channel->getMode()));
-            client.send_message(RPL_TOPICDISPLAY(this->getHostName(), client.nick, name, channel->getTopic()));
-            client.send_message(RPL_TOPICWHOTIME((*channel).getTopicNickSetter(), channel->getTopicTimestamp(),
-                client.nick, this->getHostName(), (*channel).getName()));
+            client.send_message(RPL_TOPIC(client.nick,this->getHostName(), name, channel->getTopic()));
+            client.send_message(RPL_TOPICTIME(client.nick , this->hostname, channel->getName(), channel->getTopicNickSetter(), channel->getTopicTimestamp()));
             client.send_message(RPL_NAMREPLY(this->getHostName(), channel->getListClients(), channel->getName(), client.nick));
-
             client.send_message(RPL_ENDOFNAMES(this->getHostName(), client.nick, name));
             channel->send_message(client, RPL_JOIN(client.nick, client.user, channel->getName(), client.getIpAddress()));
         }
@@ -355,8 +350,6 @@ void IRCserv::partChannel(std::string name,char *_reason, Client &client)
     if (_reason)
         reason = _reason;
     channel->partClient(client, reason);
-    
-        
 }
 
 

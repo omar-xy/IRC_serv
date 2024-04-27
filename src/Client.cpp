@@ -121,6 +121,8 @@ bool Client::operator== (const Client &c)
 		return true; 
 	return false; 
 } 
+
+
 bool Client::operator!= (const Client &c)
 { 
 	return (!(this == &c));

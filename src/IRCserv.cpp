@@ -299,18 +299,12 @@ void	IRCserv::loop()
 
 void IRCserv::handle_message(char *msg, Client &client)
 {
-
 	char *cmd;
 	char *tmp = strdup(msg);
     cmd = strtok(tmp, " ");
-
-    if (!strcmp("JOIN", cmd))
-        this->parseChannelMessage(msg, client);
-	else if (!strcmp("PART", cmd))
-        this->parsePartMessage(msg, client);
-	else if (!strcmp("QUIT", cmd))
-        this->parseQuitMessage(msg, client);
-	else if (!strcmp("PASS", cmd) || !strcmp("USER", cmd))
+	if (!cmd)
+		return ;
+	if (!strcmp("PASS", cmd) || !strcmp("USER", cmd))
 		client.send_message(ERR_ALREADYREGISTERED(client.nick, this->getHostName()));
 	else if (!strcmp("NICK", cmd))
 	{
@@ -318,6 +312,12 @@ void IRCserv::handle_message(char *msg, Client &client)
 		if (nick && !isClientExisiting(nick))
 			client.nick = std::string(nick);
 	}
+    else if (!strcmp("JOIN", cmd))
+        this->parseChannelMessage(msg, client);
+	else if (!strcmp("PART", cmd))
+        this->parsePartMessage(msg, client);
+	else if (!strcmp("QUIT", cmd))
+        this->parseQuitMessage(msg, client);
 	else if (!strcmp("PRIVMSG", cmd))
 		this->parsePRIVMSG(msg, client);
 	else if (!strcmp("MODE" , cmd))
@@ -328,19 +328,21 @@ void IRCserv::handle_message(char *msg, Client &client)
 		this->handleKick(msg, client);
 	else if (!strcmp("TOPIC", cmd))
 		this->handleTopic(msg, client);
-	// else if (!strcmp("BOT", cmd))
-	// 	this->handleBot(msg, client);
 }
 
 void IRCserv::handleTopic(char *msg, Client &client)
 {
 	char *part = strtok(msg, " ");
+	bool clear = false;
 	if (strcmp("TOPIC", part))
 		return;
 	char *channel = strtok(NULL, " ");
 	char *topic = strtok(NULL, "");
 	if (topic && topic[0] == ':')
+	{
+		clear = true;
 		topic++;
+	}
 	else if (topic && topic[0] != ':')
 		topic = strtok(topic, " ");
 	if (!channel)
@@ -351,7 +353,7 @@ void IRCserv::handleTopic(char *msg, Client &client)
 	Channel *ch = isChannelExisiting(channel);
 	if (!ch)
 	{
-		client.send_message(ERR_NOSUCHCHANNEL(client.nick, this->getHostName(), channel));
+		client.send_message(ERR_NOSUCHCHANNEL(this->hostname, client.nick, channel));
 		return;
 	}
 	if (!ch->isClientOnChannel(client))
@@ -359,32 +361,39 @@ void IRCserv::handleTopic(char *msg, Client &client)
 		client.send_message(ERR_NOTONCHANNEL(this->getHostName(), channel));
 		return;
 	}
-	if (!topic)
+	if (!topic && clear)
 	{
 		if (ch->isTopicSet && ch->isFdOperator(client.sock))
 		{
 			ch->setTopic("");
-			client.send_message(RPL_TOPIC(client.nick, this->getHostName(), channel, ch->getTopicNickSetter(), ch->getTopic()));
+			client.send_message(RPL_TOPIC(this->hostname, client.nick, channel, ch->getTopic()));
 		}
 		else if (!ch->isTopicSet)
 		{
 			ch->setTopic("");
-			client.send_message(RPL_TOPIC(client.nick, this->getHostName(), channel, ch->getTopicNickSetter(), ch->getTopic()));
+			client.send_message(RPL_TOPIC(this->getHostName(), client.nick, channel, ch->getTopic()));
 		}
 		else
 			client.send_message(ERR_CHANOPRIVSNEEDED(client.nick, this->getHostName(), channel));
+	}
+	else if (!topic && !clear)
+	{
+		if (ch->getTopic().size() > 0)
+			client.send_message(RPL_TOPIC(client.nick, this->hostname, channel, ch->getTopic()));
+		else
+			client.send_message(RPL_NOTOPIC(client.nick, this->hostname, channel));
 	}
 	else
 	{
 		if (ch->isTopicSet && ch->isFdOperator(client.sock))
 		{
 			ch->setTopic(topic);
-			client.send_message(RPL_TOPIC(client.nick, this->getHostName(), channel, ch->getTopicNickSetter(),ch->getTopic()));
+			client.send_message(RPL_TOPIC(client.nick, this->hostname, channel ,ch->getTopic()));
 		}
 		else if (!ch->isTopicSet)
 		{
-			ch->setTopic("");
-			client.send_message(RPL_TOPIC(client.nick, this->getHostName(), channel, ch->getTopicNickSetter(), ch->getTopic()));
+			ch->setTopic(topic);
+			client.send_message(RPL_TOPIC(client.nick, this->hostname, ch->getName(), ch->getTopic()));
 		}
 		else
 			client.send_message(ERR_CHANOPRIVSNEEDED(client.nick, this->getHostName(), channel));
@@ -425,7 +434,6 @@ void IRCserv::handleKick(char *msg, Client &client)
 		client.send_message(ERR_NOTOP(this->getHostName(), channel));
 		return;
 	}
-
 	Client *kicked = NULL;
 	for (std::map<int, Client>::iterator it = clients.begin(); it != clients.end(); it++)
 	{
@@ -440,7 +448,6 @@ void IRCserv::handleKick(char *msg, Client &client)
 		client.send_message(ERR_NOSUCHNICK(this->getHostName(), channel, nick));
 		return;
 	}
-	// send reply to kick client from channel
 	std::string reasonStr = reason;
 	if (reasonStr.size() > 0 && reasonStr[0] == ':')
 		reasonStr = reasonStr.substr(1);
@@ -541,7 +548,7 @@ void IRCserv::parseChannelMessage(char *msg, Client &client)
         char *_keys = strtok(NULL, "");
         std::vector<std::string> keys;
         if (_keys)
-            keys = split(((std::string)_keys), ' ');// no need to type_cast..
+            keys = split((_keys), ' ');
         unsigned long i = 0;
         chName = strtok(_channels, ",");
         while (chName != NULL)

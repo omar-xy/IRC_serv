@@ -33,25 +33,10 @@ class IRCserv {
 
 		std::vector<Channel*> channels;
 
-		void handle_message(char *msg, Client &client);
-        void parseChannelMessage(char *msg, Client &client);
-		void parsePartMessage(char *msg, Client &client);
-		void parseQuitMessage(char *msg, Client &client);
-		void parsePRIVMSG(char *msg, Client &client);
-		void handleMode(char *msg, Client &client);
-		void handleBot(char *msg, Client &client);
-
-		// --- INVITE ---
-		void handleInvite(char *msg, Client &client);
-
-		// --- KICK ---
-		void handleKick(char *msg, Client &client);
-
-		// --- TOPIC ---
-		void handleTopic(char *msg, Client &client);
 		// --- BOT ---
 
 
+		void handle_message(char *msg, Client &client);
 		Channel *isChannelExisiting(std::string name);
 		void partChannel(std::string name,char *reason, Client &client);
 		void applyModeFlags(std::string channelName, std::string modeFlags, char *addParams, Client &client);
@@ -63,8 +48,16 @@ class IRCserv {
 	public:
 		IRCserv(std::string port, std::string password);
 		Client *isClientExisiting(std::string name);
-		
 		std::string getHostName();
+		
+		void parsePRIVMSG(char *msg, Client &client);
+        void parseChannelMessage(char *msg, Client &client);
+		void parseQuitMessage(char *msg, Client &client);
+		void parsePartMessage(char *msg, Client &client);
+		void handleMode(char *msg, Client &client);
+		void handleInvite(char *msg, Client &client);
+		void handleKick(char *msg, Client &client);
+		void handleTopic(char *msg, Client &client);
 
 		void addNewChannel(std::string name, char *pass, Client &client);
 		void removeChannel(std::string name);

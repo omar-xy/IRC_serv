@@ -328,6 +328,13 @@ void IRCserv::handle_message(char *msg, Client &client)
 		this->handleKick(msg, client);
 	else if (!strcmp("TOPIC", cmd))
 		this->handleTopic(msg, client);
+	// handle ping pong
+	else if (!strcmp("PING", cmd))
+		client.send_message(RPL_PONG(this->getHostName(), client.nick));
+	else if (!strcmp("PONG", cmd))
+		client.send_message(RPL_PONG(this->getHostName(), client.nick));
+	else
+		client.send_message(ERR_UNKNOWNCOMMAND(client.nick, this->getHostName(), cmd));
 }
 
 void IRCserv::handleTopic(char *msg, Client &client)

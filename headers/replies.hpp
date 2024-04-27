@@ -79,3 +79,7 @@
 #define RPL_NOTOPIC(nick, hostname, channel) ":" + hostname + " 331 " + nick + " " + channel + " :No topic is set\r\n"
 
 #define ERR_CANNOTSENDTOCHAN(nick, channel, hostname) ":" + hostname + " 404 " + nick + " " + channel + " :Cannot send to channel\r\n"
+
+// PING PONG
+#define RPL_PONG(hostname, nick) ":" + nick + " PING " + hostname + "\r\n"
+#define RPL_PING(hostname, nick) ":" + hostname + " PONG " + nick + "\r\n"

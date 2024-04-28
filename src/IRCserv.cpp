@@ -455,7 +455,7 @@ void IRCserv::handleKick(char *msg, Client &client)
 		client.send_message(ERR_NOSUCHNICK(this->getHostName(), channel, nick));
 		return;
 	}
-	std::string reasonStr = reason;
+	std::string reasonStr = (!reason? "" : std::string(reason)); // the error was here, because it get aborded if reason is `null`
 	if (reasonStr.size() > 0 && reasonStr[0] == ':')
 		reasonStr = reasonStr.substr(1);
 	ch->send_message(RPL_KICK(client.nick, client.user, this->getHostName(), channel, kicked->nick, reasonStr));
